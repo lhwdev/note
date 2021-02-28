@@ -7,7 +7,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: squidfunk/mkdocs-material
+    runs-on: ubuntu-latest
+    container: squidfunk/mkdocs-material
     steps:
       - uses: actions/checkout@v2
       - run: mkdocs gh-deploy --force
