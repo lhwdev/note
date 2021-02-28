@@ -4,7 +4,7 @@ date: 2021-02-28
 ---
 
 # How How Jetpack Compose works
-!!! warning 🚧 **Under Construction**
+!!! warning "🚧 **Under Construction**"
     This document is not completed.
 
 
@@ -48,7 +48,7 @@ I'll explain more about other things.
 **Compose compiler plugin** was built on the Backend IR, and transforms your composable functions.
 
 Your code:
-```kotlin
+``` kotlin
 @Composable
 fun MyComposable(name: String) {
 	var count by remember { mutableStateOf(1) }
@@ -67,7 +67,7 @@ fun Button(onClick: () -> Unit,
 ```
 
 Compiled output(pseudo code):
-```kotlin
+``` kotlin
 @Composable
 fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 	$composer.startRestartableGroup(193822) // a hash of source location, eg) "com.example/myFile.kt/MyComposable"
