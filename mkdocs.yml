@@ -16,6 +16,7 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.inlinehilite
+  - pymdownx.superfences
 
 nav:
   - 'index.md'
