@@ -1,0 +1,22 @@
+site_name: Note
+site_description: Where I write what I want to write
+site_author: lhwdev
+site_url: http://lhwdev.github.io/note
+repo_url: https://github.com/lhwdev/note
+
+extra_javascript: []
+extra_css: []
+dev_addr: 0.0.0.0:8000
+
+theme:
+  name: material
+  palette:
+    scheme: preference
+
+markdown_extensions:
+  - admonition
+
+nav:
+  - 'index.md'
+  - 'Jetpack compose':
+    - 'compose/how-it-works.md'
