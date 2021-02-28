@@ -6,7 +6,7 @@ repo_url: https://github.com/lhwdev/note
 
 extra_javascript: []
 extra_css: []
-dev_addr: 0.0.0.0:8000
+dev_addr: localhost:8000
 
 theme:
   name: material
