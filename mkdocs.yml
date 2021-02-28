@@ -14,8 +14,10 @@ theme:
     scheme: preference
 
 markdown_extensions:
-  - admonition
+  - pymdownx.highlight:
+      use_pygments: true
   - pymdownx.inlinehilite
+  - admonition
   - pymdownx.superfences
 
 nav:
