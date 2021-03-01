@@ -60,10 +60,10 @@ fun MyComposable(name: String) {
 }
 
 @Composable
-fun Text(text: String, style: TextStyle)
+fun Text(text: String, style: TextStyle = TextStyle())
 
 @Composable
-fun Button(onClick: () -> Unit, 
+fun Button(onClick: () -> Unit, content: @Composable () -> Unit)
 ```
 
 Compiled output(pseudo code):
@@ -86,12 +86,12 @@ fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 			$changed = 0b0000000, // assume that these two(text, style) are the only parameter
 			$default = 0b00
 		)
-		Button(onClick = { count++ }, {
-	  		Text(
+		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
+	  	Text(
 				"Click $name", style = null,
 				$composer = $composer,
 				$changed = 0b0000000,
-				$default = 0b
+				$default = 0b01
 			)
 		}, $composer, 0b0000000)
 	} else {

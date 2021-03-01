@@ -8,10 +8,17 @@ extra_javascript: []
 extra_css: []
 dev_addr: localhost:8000
 
+plugins:
+  - minify:
+      minify_html: true
+
 theme:
   name: material
+  custom_dir: theme_override
   palette:
     scheme: preference
+    primary: indigo
+    accent: indigo
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -21,6 +28,6 @@ markdown_extensions:
   - pymdownx.superfences
 
 nav:
-  - 'index.md'
-  - 'Jetpack compose':
-    - 'compose/how-it-works.md'
+  - Home: index.md
+  - Jetpack compose:
+    - compose/how-it-works.md
