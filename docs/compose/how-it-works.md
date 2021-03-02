@@ -3,12 +3,12 @@ title: How Jetpack Compose Works
 date: 2021-02-28
 ---
 
-# How How Jetpack Compose works
-!!! warning "🚧 **Under Construction**"
+# How Jetpack Compose works
+!!! warning "**Under Construction**"
     This document is not completed.
 
 
-While I'm using jetpack compose, I was quite impressive
+While I'm using jetpack compose, I was quite impressed
 how it was beautiful to write UI.
 (but note that Jetpack Compose itself has to do nothing with UI; it's a tool for building trees)
 
@@ -44,8 +44,37 @@ There is [a great video describing about this](https://youtu.be/Q9MtlmmN4Q0).
 I'll explain more about other things.
 
 
+## How it detects state changes
+Consider the code below:
+``` kotlin
+val state = mutableStateOf("Apple") // bad practice, but for example
+
+@Composable
+fun A() {
+  Text("wow, ${state.value}!")
+  Button(onClick = { state.value = "Banana" }) {
+    Text("hi")
+  }
+}
+```
+Clicking the button changes the `state`, and
+`A` is recomposed automatically. But how?
+
+**Snapshot** system handles this.
+While composing, your composer registers an observer to the current snapshot,
+and reading the state will fire the observer.
+It finally calls `composer.recordReadOf(state)` so your composable
+function automatically subscribes to that state.
+This is why you should not use normal mutable objects: they
+do not subscribe to the current snapshot.
+
+There are some predefined types: `SnapshotStateList` and
+`SnapshotStateMap`, in addition to `SnapshotMutableState`.
+
+
 ## How it compiles
-**Compose compiler plugin** was built on the Backend IR, and transforms your composable functions.
+**Compose compiler plugin** was built on the Backend IR,
+and transforms your composable functions.
 
 Your code:
 ``` kotlin
@@ -70,10 +99,10 @@ Compiled output(pseudo code):
 ``` kotlin
 @Composable
 fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
-	$composer.startRestartableGroup(193822) // a hash of source location, eg) "com.example/myFile.kt/MyComposable"
+	$composer.startRestartGroup(193822) // a hash of source location, eg) "com.example/myFile.kt/MyComposable"
 	val $dirty = $changed // 'val' is not a typo
 	
-	if($dirty and 0b0110 != 0)
+	if($dirty and 0b0110 == 0)
 		$dirty = $dirty or if($composer.changed(name)) 0b0010 else 0b0100
 	
 	if($dirty and 0b1011 xor 0b1010 != 0 || !$composer.skipping) {
@@ -83,21 +112,68 @@ fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 			"Clicked $count times",
 			style = MaterialTheme.<get-typography>($composer, 0b0).h2,
 			$composer = $composer,
-			$changed = 0b0000000, // assume that these two(text, style) are the only parameter
+			$changed = 0b0000000,
 			$default = 0b00
 		)
 		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
 	  	Text(
 				"Click $name", style = null,
 				$composer = $composer,
-				$changed = 0b0000000,
-				$default = 0b01
+				$changed = 0b0000000 or ($dirty and 0b1110),
+				$default = 0b10
 			)
 		}, $composer, 0b0000000)
 	} else {
 		$composer.skipToGroupEnd()
 	}
-	$composer.endRestartableGroup()
+	$composer.endRestartGroup()?.updateScope { composer -> MyComposable(name, composer, $dirty or 0b1) }
+}
+
+// ...
+```
+
+Wow, lots of things are done!  
+Let's break up these things into pieces.
+
+The semantic of Composable function is similar to `#!kotlin suspend fun`.
+
+
+``` kotlin
+@Composable
+fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
+```
+
+
+
+``` kotlin
+	$composer.startRestartGroup(193822) // a hash of source location, eg) "com.example/myFile.kt/MyComposable"
+	val $dirty = $changed // 'val' is not a typo
+	
+	if($dirty and 0b0110 == 0)
+		$dirty = $dirty or if($composer.changed(name)) 0b0010 else 0b0100
+	
+	if($dirty and 0b1011 xor 0b1010 != 0 || !$composer.skipping) {
+		var count by $composer.cache(true) { mutableStateOf(1) }
+		
+		Text(
+			"Clicked $count times",
+			style = MaterialTheme.<get-typography>($composer, 0b0).h2,
+			$composer = $composer,
+			$changed = 0b0000000,
+			$default = 0b00
+		)
+		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
+	  	Text(
+				"Click $name", style = null,
+				$composer = $composer,
+				$changed = 0b0000000 or ($dirty and 0b1110),
+				$default = 0b10
+			)
+		}, $composer, 0b0000000)
+	} else {
+		$composer.skipToGroupEnd()
+	}
+	$composer.endRestartGroup()?.updateScope { composer -> MyComposable(name, composer, $dirty or 0b1) }
 }
 
 // ...
