@@ -16,7 +16,7 @@ I wondered how it works, I digged its runtime and compiler plugin.
 These are what I found.
 
 !!! note
-    You are expected to understand how Compose works(some mental model, etc.)  
+    You are expected to have a background about Compose model.  
     This document only covers Compose itself, not Compose UI or related.
     Compose is in beta stage; these contents may be obsolete.  
     Disclaimer: you may expect poor English & explaination
@@ -31,7 +31,7 @@ These are what I found.
 
 ## How it diffs the tree
 Composable functions are what is called every time it recomposes.
-Calling another composable function marks that invocation into the **Composer**,
+Calling another composable function marks that invocation into the Composer,
 which the function receives through its parameter. Of course you cannot see it in the code,
 but it does receive after transformed by compiler plugin.  
 Then, Composer internally builds a **slot table** which is built on gap array.
@@ -73,7 +73,7 @@ Clicking the button changes the `state`, and
 **Snapshot** system handles this.
 While composing, your composer registers an observer to the current snapshot,
 and reading the state will fire the observer.
-It finally calls `!#kotlin composer.recordReadOf(state)` so your composable
+It finally calls `#!kotlin composer.recordReadOf(state)` so your composable
 function automatically subscribes to that state.
 This is why you should not use normal mutable objects: they
 do not subscribe to the current snapshot by themselves.
@@ -147,7 +147,7 @@ Let's break up these things into pieces.
 
 The semantic of Composable function is similar to `#!kotlin suspend fun`.
 
-> `!#kotlin suspend fun` can call `!#kotlin suspend fun`;
+> `#!kotlin suspend fun` can call `!#kotlin suspend fun`;
   normal function cannot call `!#kotlin suspend fun`.
 
 Likewise, normal function cannot call `!#kotlin @Composable fun`.
@@ -171,7 +171,7 @@ Compose propagates the state, if it is changed. The state is passed through
 `$changed`, which consists of 3-bit per parameter integer.
 
 The highest bit(0) indicates if it is *stable*. Stability is indicated via
-`@Stable` etc, or inferred by the compiler plugin.
+`#!kotlin @Stable` etc, or inferred by the compiler plugin.
 1 means unstable, and 0 means stable.
 
 Two lower bits(1, 2) indicates the status of the parameter like below.
