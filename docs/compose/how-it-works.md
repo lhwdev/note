@@ -147,10 +147,10 @@ Let's break up these things into pieces.
 
 The semantic of Composable function is similar to `#!kotlin suspend fun`.
 
-> `#!kotlin suspend fun` can call `!#kotlin suspend fun`;
-  normal function cannot call `!#kotlin suspend fun`.
+> `#!kotlin suspend fun` can call `#!kotlin suspend fun`;
+  normal function cannot call `#!kotlin suspend fun`.
 
-Likewise, normal function cannot call `!#kotlin @Composable fun`.
+Likewise, normal function cannot call `#!kotlin @Composable fun`.
 This is because, basically they are a different kind of function, and they
 receives an additional synthetic parameter: Composer.
 
@@ -159,7 +159,7 @@ receives an additional synthetic parameter: Composer.
 @Composable
 fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 ```
-You can see an synthetic paremeter `!#kotlin $composer: Composer<*>` is added.
+You can see an synthetic paremeter `#!kotlin $composer: Composer<*>` is added.
 
 There's one more parameter: `$changed`.
 
@@ -225,13 +225,13 @@ Every Composable function produces a group.
 ```
 As described above, it checks the `$changed` parameter(in turn `dirty`).
 If the state is Uncertain(00), it compares the parameter via
-`!#kotlin $composer.changed(argument)`.
+`#!kotlin $composer.changed(argument)`.
 
 What it internally does:
 1. Retrives the previous slot if exist(let be `previous`; if not exist then
   becomes a special singleton value `EMPTY`)
 2. Saves the `argument` into the slot table
-3. Returns `!#kotlin previous != argument`.
+3. Returns `#!kotlin previous != argument`.
 
 So if `argument` is changed, the state becomes Different(10).
 If not, becomes Same(01).
