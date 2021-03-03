@@ -1,14 +1,14 @@
 ---
-title: How Jetpack Compose Works
+title: How Compose Works
 date: 2021-02-28
 ---
 
-# How Jetpack Compose works
+# How Compose works
 !!! warning "**Under Construction**"
     This document is not completed.
 
 
-While I'm using jetpack compose, I was quite impressed
+While I'm using compose(or Jetpack Compose), I was quite impressed
 how it was beautiful to write UI.
 (but note that Jetpack Compose itself has to do nothing with UI; it's a tool for building trees)
 
@@ -16,8 +16,18 @@ I wondered how it works, I digged its runtime and compiler plugin.
 These are what I found.
 
 !!! note
-    Compose is in beta stage; these contents may be obsolete.
+    You are expected to understand how Compose works(some mental model, etc.)  
+    This document only covers Compose itself, not Compose UI or related.
+    Compose is in beta stage; these contents may be obsolete.  
     Disclaimer: you may expect poor English & explaination
+
+## Terms
+- **Composer** is what manages the state of tree. Every Composable function
+  receives this as a parameter.
+- **Composition** is an act building up a tree.
+- **Recomposition** is an act rebuilding a tree. You can access the
+  corresponding part of the previous tree if exists.
+
 
 ## How it diffs the tree
 Composable functions are what is called every time it recomposes.
@@ -63,12 +73,12 @@ Clicking the button changes the `state`, and
 **Snapshot** system handles this.
 While composing, your composer registers an observer to the current snapshot,
 and reading the state will fire the observer.
-It finally calls `composer.recordReadOf(state)` so your composable
+It finally calls `!#kotlin composer.recordReadOf(state)` so your composable
 function automatically subscribes to that state.
 This is why you should not use normal mutable objects: they
-do not subscribe to the current snapshot.
+do not subscribe to the current snapshot by themselves.
 
-There are some predefined types: `SnapshotStateList` and
+There are some predefined types to so this: `SnapshotStateList` and
 `SnapshotStateMap`, in addition to `SnapshotMutableState`.
 
 
@@ -137,21 +147,96 @@ Let's break up these things into pieces.
 
 The semantic of Composable function is similar to `#!kotlin suspend fun`.
 
+> `!#kotlin suspend fun` can call `!#kotlin suspend fun`;
+  normal function cannot call `!#kotlin suspend fun`.
+
+Likewise, normal function cannot call `!#kotlin @Composable fun`.
+This is because, basically they are a different kind of function, and they
+receives an additional synthetic parameter: Composer.
+
 
 ``` kotlin
 @Composable
 fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 ```
+You can see an synthetic paremeter `!#kotlin $composer: Composer<*>` is added.
+
+There's one more parameter: `$changed`.
+
+Composable function tries to skip execution when its parameters are unchanged.
+But comparing if parameters are changed is quite expensive in some cases.
+So Compose tries to avoid the comparison.  
+When you just passes your argument to another Composable function as-is,
+Compose propagates the state, if it is changed. The state is passed through
+`$changed`, which consists of 3-bit per parameter integer.
+
+The highest bit(0) indicates if it is *stable*. Stability is indicated via
+`@Stable` etc, or inferred by the compiler plugin.
+1 means unstable, and 0 means stable.
+
+Two lower bits(1, 2) indicates the status of the parameter like below.
+
+* **Uncertain**(00)
+  Indicates that nothing is certain about the current state of the parameter.
+  It could be different than it was during the last execution, or it could be
+  the same, but it is not known so the current function looking at it must call
+  equals on it in order to find out.
+  This is the only state that can cause the function to spend slot table space
+  in order to look at it.
+  
+* **Same**(01)
+  This indicates that the value is known to be the same since the last time
+  the function was executed.
+  There is no need to store the value in the slot table in this case because
+  the calling function will *always* know whether the value was the same or
+  different as it was in the previous execution.
+  
+* **Static**(11)
+  This indicates that the value is known to be different since the last time
+  the function was executed.
+  There is no need to store the value in the slot table in this case because
+  the calling function will *always* know whether the value was the same or
+  different as it was in the previous execution.
+  
+* **Different**(10)
+  This indicates that the value is known to *never change* for the duration
+  of the running program.
+
+(documentation copied from Compose source)
+
+The lowest bit(2) indicates if it is changed, 1 for same and 0 for different.
+If the state is Uncertain(00), it will be replaced by the result of comparison.
+
+The lowest bit of `$changed` itself(31) is a special bit indicating a force
+recomposition, set to 1 when it recomposes.
 
 
 
 ``` kotlin
-	$composer.startRestartGroup(193822) // a hash of source location, eg) "com.example/myFile.kt/MyComposable"
+	$composer.startRestartGroup(193822)
+```
+Every Composable function produces a group.
+
+``` kotlin
 	val $dirty = $changed // 'val' is not a typo
 	
-	if($dirty and 0b0110 == 0)
+	if($dirty and 0b0110 == 0b0000)
 		$dirty = $dirty or if($composer.changed(name)) 0b0010 else 0b0100
-	
+```
+As described above, it checks the `$changed` parameter(in turn `dirty`).
+If the state is Uncertain(00), it compares the parameter via
+`!#kotlin $composer.changed(argument)`.
+
+What it internally does:
+1. Retrives the previous slot if exist(let be `previous`; if not exist then
+  becomes a special singleton value `EMPTY`)
+2. Saves the `argument` into the slot table
+3. Returns `!#kotlin previous != argument`.
+
+So if `argument` is changed, the state becomes Different(10).
+If not, becomes Same(01).
+
+``` kotlin
 	if($dirty and 0b1011 xor 0b1010 != 0 || !$composer.skipping) {
 		var count by $composer.cache(true) { mutableStateOf(1) }
 		
@@ -178,18 +263,6 @@ fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 
 // ...
 ```
-
-
-
-* **Uncertain**(000)
-  Indicates that nothing is certain about the current state of the parameter. It could be different than it was during the last execution, or it could be the same, but it is not known so the current function looking at it must call equals on it in order to find out.
-  This is the only state that can cause the function to spend slot table space in order to look at it.
-* **Same**(001)
-  This indicates that the value is known to be the same since the last time the function was executed. There is no need to store the value in the slot table in this case because the calling function will *always* know whether the value was the same or different as it was in the previous execution.
-* **Static**(011)
-  This indicates that the value is known to be different since the last time the function was executed. There is no need to store the value in the slot table in this case because the calling function will *always* know whether the value was the same or different as it was in the previous execution.
-* **Different**(010)
-  This indicates that the value is known to *never change* for the duration of the running program.
 
 
 
