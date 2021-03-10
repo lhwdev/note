@@ -3,6 +3,7 @@ site_description: Where I write what I want to write
 site_author: lhwdev
 site_url: http://lhwdev.github.io/note
 repo_url: https://github.com/lhwdev/note
+copyright: Copyright &copy; lhwdev 2021. See <a href="https://github.com/lhwdev/note/tree/master/LICENSE">License</a>.
 
 extra_javascript: []
 extra_css: []

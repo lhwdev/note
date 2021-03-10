@@ -5,7 +5,7 @@ date: 2021-02-28
 
 # How Compose works
 !!! warning "**Under Construction**"
-    This document is not completed.
+    This document is not completed. (but still usable)
 
 
 While I'm using compose(or Jetpack Compose), I was quite impressed
@@ -78,12 +78,12 @@ function automatically subscribes to that state.
 This is why you should not use normal mutable objects: they
 do not subscribe to the current snapshot by themselves.
 
-There are some predefined types to so this: `SnapshotStateList` and
+There are some predefined types to do this: `SnapshotStateList` and
 `SnapshotStateMap`, in addition to `SnapshotMutableState`.
 
 
 ## How it compiles
-**Compose compiler plugin** was built on the Backend IR,
+**Compose compiler plugin** is built on the Backend IR,
 and transforms your composable functions.
 
 Your code:
@@ -123,14 +123,14 @@ fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 			style = MaterialTheme.<get-typography>($composer, 0b0).h2,
 			$composer = $composer,
 			$changed = 0b0000000,
-			$default = 0b00
+			$default = 0b0
 		)
 		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
 	  	Text(
 				"Click $name", style = null,
 				$composer = $composer,
 				$changed = 0b0000000 or ($dirty and 0b1110),
-				$default = 0b10
+				$default = 0b1
 			)
 		}, $composer, 0b0000000)
 	} else {
@@ -167,7 +167,7 @@ Composable function tries to skip execution when its parameters are unchanged.
 But comparing if parameters are changed is quite expensive in some cases.
 So Compose tries to avoid the comparison.  
 When you just passes your argument to another Composable function as-is,
-Compose propagates the state, if it is changed. The state is passed through
+Compose propagates the state, whether it is changed. The state is passed through
 `$changed`, which consists of 3-bit per parameter integer.
 
 The highest bit(0) indicates if it is *stable*. Stability is indicated via
@@ -207,7 +207,7 @@ Two lower bits(1, 2) indicates the status of the parameter like below.
 The lowest bit(2) indicates if it is changed, 1 for same and 0 for different.
 If the state is Uncertain(00), it will be replaced by the result of comparison.
 
-The lowest bit of `$changed` itself(31) is a special bit indicating a force
+The lowest bit of `$changed` itself is a special bit indicating a force
 recomposition, set to 1 when it recomposes.
 
 
@@ -223,46 +223,130 @@ Every Composable function produces a group.
 	if($dirty and 0b0110 == 0b0000)
 		$dirty = $dirty or if($composer.changed(name)) 0b0010 else 0b0100
 ```
-As described above, it checks the `$changed` parameter(in turn `dirty`).
+As described above, it checks the `$changed` parameter(in turn `$dirty`).
 If the state is Uncertain(00), it compares the parameter via
 `#!kotlin $composer.changed(argument)`.
 
 What it internally does:
 1. Retrives the previous slot if exist(let be `previous`; if not exist then
-  becomes a special singleton value `EMPTY`)
+    becomes a special singleton value `EMPTY`)
 2. Saves the `argument` into the slot table
 3. Returns `#!kotlin previous != argument`.
 
 So if `argument` is changed, the state becomes Different(10).
 If not, becomes Same(01).
 
+
 ``` kotlin
 	if($dirty and 0b1011 xor 0b1010 != 0 || !$composer.skipping) {
+```
+If all parameters are Same(001) and Stable(100), and the composer allows
+skipping, the execution is skipped. If not, it will execute.
+
+
+``` kotlin
 		var count by $composer.cache(true) { mutableStateOf(1) }
-		
+```
+This is special kind of transformation. `#!kotlin remember(..) { expr }`
+becomes `#!kotlin $composer.cache(..) { expr }`.
+`true` means it does not always have to update.
+
+
+``` kotlin
 		Text(
 			"Clicked $count times",
 			style = MaterialTheme.<get-typography>($composer, 0b0).h2,
 			$composer = $composer,
 			$changed = 0b0000000,
-			$default = 0b00
+			$default = 0b0
 		)
+```
+This is a normal Composable function call.
+
+You can see something strange:
+`#!kotlin MaterialTheme.<get-typography>($composer, 0b0)`.
+As you might know, every property consists of getter, optional setter, and
+optional backing field. Getting property basically corresponds to calling getter
+internally. Its name is called `<get-propertyName>` in IR.
+As it is a normal function, compiler plugin can add a value parameter to getter.
+(yet impossible in plain Kotlin code)
+
+So, Composable function passes its `$composer` to Composable function,
+and `$changed` argument. It checks for all dependencies associated with that
+argument. For example, if the argument is `#!kotlin "Hello, $name($age)!"``,
+it depends on `name` and `age`.
+
+- If a variable is
+  * `#!kotlin const val`, global `val`, object etc: Static
+  * remember without keys(`#!kotlin remember(/* nothing here */) { .. }`): Static
+  * parameter: delegated (like `#!kotlin $changedN and 0b1110 shl 3`)
+- If an expression is
+  * builtin expressions(Int.plus, "$variable, string, ${someExpr()}" etc):
+    combine all of its value parameters/receivers
+  * calling `#!kotlin @Stable fun`: combine all of
+  * unknown arbitrary function call: Unknown
+
+Also, whether all dependencies are *Stable* is marked.
+For more information, you can check [the source code of StabilityInferencer](https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/compose/compiler/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt).
+
+
+You can also see `$default`. Compose compiler plugin handles the default
+parameter by itself. It is almost identical to that of Kotlin, but Compose
+do not generate another function.
+
+Bit `1` means caller did **not** provide that parameter so requires
+special handling.
+
+
+``` kotlin
 		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
+```
+Composable lambda is handled specially.
+Group is inserted surrounding most Composable functions, but it is inserted by
+`composableLambda`.
+
+Compose compiler plugin remembers the resulting lambda instance, and even
+the original lambda itself if it does not have captures.
+So the result of `#!kotlin composableLambda(..)`, hence seemingly all the
+Composable lambda is ensured to be identical(`a === b`).
+
+
+``` kotlin
 	  	Text(
 				"Click $name", style = null,
 				$composer = $composer,
 				$changed = 0b0000000 or ($dirty and 0b1110),
-				$default = 0b10
+				$default = 0b1
 			)
 		}, $composer, 0b0000000)
+```
+Here we propagate the state of parameter `name` to the first argument `text`.
+We also use the default value of `style`, so we pass `#!kotlin $default = 0b1`.
+
+
+``` kotlin
 	} else {
 		$composer.skipToGroupEnd()
 	}
+```
+If we can skip this function, skip it.
+
+
+``` kotlin
 	$composer.endRestartGroup()?.updateScope { composer -> MyComposable(name, composer, $dirty or 0b1) }
 }
-
-// ...
 ```
+Finally, ends the group.
+`?.updateScope() { ... }` is related to Composable function Restart.
+If it can, it updates the restartable scope.
+The lambda provided to `updateScope` is used to restart the Composable function.
+If something changes, like updating state happen, Compose finds the subscribers
+(where the state is used) and retrieves the nearest restartable scope, and
+invokes it.
 
+You can see Compose compiler plugin is quite complex.
+
+
+Composer does more: it transforms **control flows** and **loops**.
 
 
