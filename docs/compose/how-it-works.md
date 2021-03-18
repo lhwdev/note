@@ -57,14 +57,14 @@ I'll explain more about other things.
 ## How it detects state changes
 Consider the code below:
 ``` kotlin
-val state = mutableStateOf("Apple") // bad practice, but for example
+val state = mutableStateOf("Apple") // just for example
 
 @Composable
 fun A() {
-  Text("wow, ${state.value}!")
-  Button(onClick = { state.value = "Banana" }) {
-    Text("hi")
-  }
+	Text("wow, ${state.value}!")
+	Button(onClick = { state.value = "Banana" }) {
+		Text("hi")
+	}
 }
 ```
 Clicking the button changes the `state`, and
@@ -84,7 +84,7 @@ There are some predefined types to do this: `SnapshotStateList` and
 
 ## How it compiles
 **Compose compiler plugin** is built on the Backend IR,
-and transforms your composable functions.
+and transforms your Composable functions.
 
 Your code:
 ``` kotlin
@@ -98,11 +98,21 @@ fun MyComposable(name: String) {
 	}
 }
 
+
+// stubs for Compose UI
+
 @Composable
 fun Text(text: String, style: TextStyle = TextStyle())
 
 @Composable
 fun Button(onClick: () -> Unit, content: @Composable () -> Unit)
+
+object MaterialTheme {
+	val typography: Typography
+		@Composable get() = TODO()
+}
+
+data class Typography(val h2: TextStyle)
 ```
 
 Compiled output(pseudo code):
@@ -126,7 +136,7 @@ fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 			$default = 0b0
 		)
 		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
-	  	Text(
+			Text(
 				"Click $name", style = null,
 				$composer = $composer,
 				$changed = 0b0000000 or ($dirty and 0b1110),
@@ -229,7 +239,7 @@ If the state is Uncertain(00), it compares the parameter via
 
 What it internally does:
 1. Retrives the previous slot if exist(let be `previous`; if not exist then
-    becomes a special singleton value `EMPTY`)
+  becomes a special singleton value `EMPTY`)
 2. Saves the `argument` into the slot table
 3. Returns `#!kotlin previous != argument`.
 
@@ -273,7 +283,7 @@ As it is a normal function, compiler plugin can add a value parameter to getter.
 
 So, Composable function passes its `$composer` to Composable function,
 and `$changed` argument. It checks for all dependencies associated with that
-argument. For example, if the argument is `#!kotlin "Hello, $name($age)!"``,
+argument. For example, if the argument is `#!kotlin "Hello, $name($age)!"`,
 it depends on `name` and `age`.
 
 - If a variable is
@@ -312,7 +322,7 @@ Composable lambda is ensured to be identical(`a === b`).
 
 
 ``` kotlin
-	  	Text(
+			Text(
 				"Click $name", style = null,
 				$composer = $composer,
 				$changed = 0b0000000 or ($dirty and 0b1110),
@@ -337,7 +347,7 @@ If we can skip this function, skip it.
 }
 ```
 Finally, ends the group.
-`?.updateScope() { ... }` is related to Composable function Restart.
+`updateScope() { ... }` is related to Composable function Restart.
 If it can, it updates the restartable scope.
 The lambda provided to `updateScope` is used to restart the Composable function.
 If something changes, like updating state happen, Compose finds the subscribers
@@ -349,4 +359,36 @@ You can see Compose compiler plugin is quite complex.
 
 Composer does more: it transforms **control flows** and **loops**.
 
+
+``` kotlin
+if(condition) {
+	simpleFunction()
+	a += 1
+}
+```
+Codes like this are not transformed, but
+
+``` kotlin
+if(condition) {
+	ComposableFunction()
+}
+```
+Codes that calls Composable fun in the condition or its result gets transformed.
+
+Result:
+``` kotlin
+if(condition) {
+	$composer.startReplaceableGroup(29381)
+	ComposableFunction($composer, 0)
+} else {
+	$composer.startReplaceableGroup(193052)
+}
+$composer.endReplaceableGroup()
+```
+
+That is, Compose compiler handles code that **may not run only once**.
+In the previous example, `ComposableFunction` may not run or may run once.
+
+The reason composer handles this is: Composer call is sequential.
+Without this transformation, 
 

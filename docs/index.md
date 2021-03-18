@@ -2,5 +2,8 @@
 title: Home
 ---
 
-# Note
-Such wow.
+# Devnote
+Where my software developing journey lies.
+
+
+
