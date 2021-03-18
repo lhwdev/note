@@ -16,9 +16,9 @@ I wondered how it works, I digged its runtime and compiler plugin.
 These are what I found.
 
 !!! note
-    You are expected to have a background about Compose model.  
+    You are expected to have a background about Compose model.
     This document only covers Compose itself, not Compose UI or related.
-    Compose is in beta stage; these contents may be obsolete.  
+    Compose is in beta stage; these contents may be obsolete.
     Disclaimer: you may expect poor English & explaination
 
 ## Terms
@@ -33,13 +33,13 @@ These are what I found.
 Composable functions are what is called every time it recomposes.
 Calling another composable function marks that invocation into the Composer,
 which the function receives through its parameter. Of course you cannot see it in the code,
-but it does receive after transformed by compiler plugin.  
+but it does receive after transformed by compiler plugin.
 Then, Composer internally builds a **slot table** which is built on gap array.
 
 Slot table elements are called `slot`.
 The types of `slot` are: normal slot, `group`, `node`, `data`, etc.
 These are well explained in the [source code of SlotTable](https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/compose/runtime/runtime/src/commonMain/kotlin/androidx/compose/runtime/SlotTable.kt).
-One important thing is: `node`. Node is tracked by the Composer. 
+One important thing is: `node`. Node is tracked by the Composer.
 When adapting Compose to your need(again, compose is a tree managing tool), you use `Applier`.
 When a node is inserted or removed, you get a callback from this.
 
@@ -91,7 +91,7 @@ Your code:
 @Composable
 fun MyComposable(name: String) {
 	var count by remember { mutableStateOf(1) }
-	
+
 	Text("Clicked $count times", style = MaterialTheme.typography.h2)
 	Button(onClick = { count++ }) {
 		Text("Click $name")
@@ -121,13 +121,13 @@ Compiled output(pseudo code):
 fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 	$composer.startRestartGroup(193822) // a hash of source location, eg) "com.example/myFile.kt/MyComposable"
 	val $dirty = $changed // 'val' is not a typo
-	
+
 	if($dirty and 0b0110 == 0)
 		$dirty = $dirty or if($composer.changed(name)) 0b0010 else 0b0100
-	
+
 	if($dirty and 0b1011 xor 0b1010 != 0 || !$composer.skipping) {
 		var count by $composer.cache(true) { mutableStateOf(1) }
-		
+
 		Text(
 			"Clicked $count times",
 			style = MaterialTheme.<get-typography>($composer, 0b0).h2,
@@ -152,7 +152,7 @@ fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
 // ...
 ```
 
-Wow, lots of things are done!  
+Wow, lots of things are done!
 Let's break up these things into pieces.
 
 The semantic of Composable function is similar to `#!kotlin suspend fun`.
@@ -168,6 +168,8 @@ receives an additional synthetic parameter: Composer.
 ``` kotlin
 @Composable
 fun MyComposable(name: String, $composer: Composer<*>, $changed: Int) {
+	// ...
+}
 ```
 You can see an synthetic paremeter `#!kotlin $composer: Composer<*>` is added.
 
@@ -175,7 +177,7 @@ There's one more parameter: `$changed`.
 
 Composable function tries to skip execution when its parameters are unchanged.
 But comparing if parameters are changed is quite expensive in some cases.
-So Compose tries to avoid the comparison.  
+So Compose tries to avoid the comparison.
 When you just passes your argument to another Composable function as-is,
 Compose propagates the state, whether it is changed. The state is passed through
 `$changed`, which consists of 3-bit per parameter integer.
@@ -193,21 +195,21 @@ Two lower bits(1, 2) indicates the status of the parameter like below.
   equals on it in order to find out.
   This is the only state that can cause the function to spend slot table space
   in order to look at it.
-  
+
 * **Same**(01)
   This indicates that the value is known to be the same since the last time
   the function was executed.
   There is no need to store the value in the slot table in this case because
   the calling function will *always* know whether the value was the same or
   different as it was in the previous execution.
-  
+
 * **Static**(11)
   This indicates that the value is known to be different since the last time
   the function was executed.
   There is no need to store the value in the slot table in this case because
   the calling function will *always* know whether the value was the same or
   different as it was in the previous execution.
-  
+
 * **Different**(10)
   This indicates that the value is known to *never change* for the duration
   of the running program.
@@ -229,7 +231,7 @@ Every Composable function produces a group.
 
 ``` kotlin
 	val $dirty = $changed // 'val' is not a typo
-	
+
 	if($dirty and 0b0110 == 0b0000)
 		$dirty = $dirty or if($composer.changed(name)) 0b0010 else 0b0100
 ```
@@ -238,6 +240,7 @@ If the state is Uncertain(00), it compares the parameter via
 `#!kotlin $composer.changed(argument)`.
 
 What it internally does:
+
 1. Retrives the previous slot if exist(let be `previous`; if not exist then
   becomes a special singleton value `EMPTY`)
 2. Saves the `argument` into the slot table
@@ -249,6 +252,8 @@ If not, becomes Same(01).
 
 ``` kotlin
 	if($dirty and 0b1011 xor 0b1010 != 0 || !$composer.skipping) {
+		// ...
+	}
 ```
 If all parameters are Same(001) and Stable(100), and the composer allows
 skipping, the execution is skipped. If not, it will execute.
@@ -309,7 +314,7 @@ special handling.
 
 
 ``` kotlin
-		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed ->
+		Button(onClick = { count++ }, composableLambda($composer, key = 193702, tracked = true, null) { $composer, $changed -> /* ... */ })
 ```
 Composable lambda is handled specially.
 Group is inserted surrounding most Composable functions, but it is inserted by
@@ -335,7 +340,7 @@ We also use the default value of `style`, so we pass `#!kotlin $default = 0b1`.
 
 
 ``` kotlin
-	} else {
+	else {
 		$composer.skipToGroupEnd()
 	}
 ```
@@ -344,7 +349,6 @@ If we can skip this function, skip it.
 
 ``` kotlin
 	$composer.endRestartGroup()?.updateScope { composer -> MyComposable(name, composer, $dirty or 0b1) }
-}
 ```
 Finally, ends the group.
 `updateScope() { ... }` is related to Composable function Restart.
@@ -390,5 +394,5 @@ That is, Compose compiler handles code that **may not run only once**.
 In the previous example, `ComposableFunction` may not run or may run once.
 
 The reason composer handles this is: Composer call is sequential.
-Without this transformation, 
+Without this transformation,
 

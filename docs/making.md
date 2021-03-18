@@ -12,6 +12,7 @@ So I forgave and used MkDocs. (and Material for MkDocs).
 I wanted to make something instantly and showed me it as soon as.
 
 The reason I made this:
+
 - some portfolio?
 - to remember; I may forget all of this without writing down
 - contributing to public goods(?)
