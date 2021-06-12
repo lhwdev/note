@@ -10,8 +10,11 @@ extra_css: []
 dev_addr: localhost:8000
 
 plugins:
+  - search
   - minify:
       minify_html: true
+  - macros:
+      module_name: macros/main
 
 theme:
   name: material
@@ -36,6 +39,7 @@ markdown_extensions:
 nav:
   - index.md
   - making.md
+  - debug-page.md
   - 고등학교 개발:
     - high/covid-selftest-macro.md
   - Kotlin Compiler Plugin:
