@@ -36,6 +36,8 @@ markdown_extensions:
 nav:
   - index.md
   - making.md
+  - 고등학교 개발
+    - high/covid-selftest-macro.md
   - Kotlin Compiler Plugin:
     - kotlin-compiler-plugin/backend-ir.md
   - Jetpack compose:

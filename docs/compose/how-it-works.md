@@ -394,5 +394,7 @@ That is, Compose compiler handles code that **may not run only once**.
 In the previous example, `ComposableFunction` may not run or may run once.
 
 The reason composer handles this is: Composer call is sequential.
-Without this transformation,
+Without this transformation, the tree may go wrong.
+
+
 
