@@ -3,7 +3,6 @@
 def on_pre_page_macros(env):
 	global env_meta
 	env_meta = env.page.meta
-	else: env_meta = ''
 
 
 def define_env(env):
