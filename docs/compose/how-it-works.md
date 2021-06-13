@@ -4,6 +4,8 @@ date: 2021-02-28
 ---
 
 # How Compose works
+{{ head() }}
+
 !!! warning "**Under Construction**"
     This document is not completed. (but still usable)
 

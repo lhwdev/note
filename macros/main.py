@@ -1,14 +1,17 @@
 
 
 def on_pre_page_macros(env):
-	global meta_date
-	if 'date' in env.page.meta:
-		meta_date = env.page.meta['date']
-	else: meta_date = ''
+	global env_meta
+	env_meta = env.page.meta
+	else: env_meta = ''
 
 
 def define_env(env):
 	
 	@env.macro
-	def date():
-		return f''
+	def head():
+		return f'''
+			<div style="color: --md-primary-fg-color--light; font-size: 13em;">
+				{env_meta['date'] if 'date' in env else ''}
+			</div>
+		'''

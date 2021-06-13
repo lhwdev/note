@@ -4,6 +4,7 @@ date: 2021-08-21
 ---
 
 # Making this site
+{{ head() }}
 This is my first website which may be 'quite useful'.
 I've always taken lots of time configuring as if I were working on such a huge
 project.
