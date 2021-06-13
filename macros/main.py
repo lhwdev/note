@@ -9,4 +9,4 @@ def define_env(env):
 	
 	@env.macro
 	def head():
-		return f'''<div style="color: --md-primary-fg-color--light; font-size: 13em;">{env_meta.get('date', '')}</div>'''
+		return f'''<div style="color: var(--md-primary-fg-color--light); font-size: small;">{env_meta.get('date', '')}</div>'''
