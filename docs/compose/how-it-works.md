@@ -294,14 +294,14 @@ argument. For example, if the argument is `#!kotlin "Hello, $name($age)!"`,
 it depends on `name` and `age`.
 
 If a variable is
-* `#!kotlin const val`, global `val`, object etc: Static
-* remember without keys(`#!kotlin remember(/* nothing here */) { .. }`): Static
-* parameter: delegated (like `#!kotlin $changedN and 0b1110 shl 3`)
+- `#!kotlin const val`, global `val`, object etc: Static
+- remember without keys(`#!kotlin remember(/* nothing here */) { .. }`): Static
+- parameter: delegated (like `#!kotlin $changedN and 0b1110 shl 3`)
 If an expression is
-* builtin expressions(Int.plus, "$variable, string, ${someExpr()}" etc):
+- builtin expressions(Int.plus, "$variable, string, ${someExpr()}" etc):
   combine all of its value parameters/receivers
-* calling `#!kotlin @Stable fun`: combine all of
-* unknown arbitrary function call: Unknown
+- calling `#!kotlin @Stable fun`: combine all of
+- unknown arbitrary function call: Unknown
 
 Also, whether all dependencies are *Stable* is marked.
 For more information, you can check [the source code of StabilityInferencer](https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/compose/compiler/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt).
