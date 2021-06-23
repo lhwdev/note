@@ -8,12 +8,13 @@ date: 2021-03-15
 {{ head() }}
 
 !!! warning "**Under Construction**"
-    This document is not completed. (but still usable)
+    This document is not completed.
 
 
 **Backend IR** is a new, unified way of writing a compiler plugin.
 Currently IR is in a beta stage, and will be the default backend in Kotlin 1.5.
 Compared to a bare compiler plugin written for JVM, Backend IR has some benefits:
+
 - easier to write (a lot!)
 - not platform dependant
 - works well with other compiler plugins
