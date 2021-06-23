@@ -205,14 +205,14 @@ Two lower bits(1, 2) indicates the status of the parameter like below.
   the calling function will *always* know whether the value was the same or
   different as it was in the previous execution.
 
-* **Static**(11)
+* **Different**(10)
   This indicates that the value is known to be different since the last time
   the function was executed.
   There is no need to store the value in the slot table in this case because
   the calling function will *always* know whether the value was the same or
   different as it was in the previous execution.
 
-* **Different**(10)
+* **Static**(11)
   This indicates that the value is known to *never change* for the duration
   of the running program.
 
