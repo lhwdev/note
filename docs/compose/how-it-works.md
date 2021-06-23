@@ -294,10 +294,14 @@ argument. For example, if the argument is `#!kotlin "Hello, $name($age)!"`,
 it depends on `name` and `age`.
 
 If a variable is
+
 - `#!kotlin const val`, global `val`, object etc: Static
 - remember without keys(`#!kotlin remember(/* nothing here */) { .. }`): Static
 - parameter: delegated (like `#!kotlin $changedN and 0b1110 shl 3`)
+
+
 If an expression is
+
 - builtin expressions(Int.plus, "$variable, string, ${someExpr()}" etc):
   combine all of its value parameters/receivers
 - calling `#!kotlin @Stable fun`: combine all of
