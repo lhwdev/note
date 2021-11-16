@@ -46,4 +46,6 @@ nav:
     - kotlin-compiler-plugin/backend-ir.md
   - Jetpack compose:
     - compose/how-it-works.md
+  - Other:
+    - other/windows-self-driver-signing.md
 
