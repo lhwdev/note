@@ -105,6 +105,7 @@ $root_cert = New-SelfSignedCertificate @cert_params
 
 - `#!powershell (Get-Date).AddYears(100)`: 100년 대신 다른 원하는 값을 입력해도 된다.
 - `#!powershell TextExtension = '2.5.29.19={text}CA=1'`:
+
   - `2.5.29.19`는 [`Basic Constraints`를 나타내는 OID이다](https://www.alvestrand.no/objectid/2.5.29.19.html).
     즉, 이 인증서를 발급한 주체가 CA로 작용할 수 있다는 것이다.
   - `CA=1`은 이 인증서가 CA 인증서라는 것이다.
