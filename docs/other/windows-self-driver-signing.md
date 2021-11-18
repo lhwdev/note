@@ -14,6 +14,7 @@ date: 2021-11-16
 !!! warning "**작성 중**"
     이 글은 아직 완성되지 않았어요.
     사실 그 이유는 지금 저 짓을 하고 있어서...
+    나중에 성공하면 스크립트로도 만들어서 배포할게요
 
 ## 왜?
 내가 온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌다. 그리고 평소에 음악을 들을 때
@@ -65,8 +66,9 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 시작하기 전에 자신의 기기에서 **UEFI 플랫폼 키**를 설정하는 방법이 있는지, 어떻게 하는지를 미리
 알아보자. UEFI가 지원하지 않는다면 이걸 할 수가 없다.
 
-!!! info 일단 이걸 하기 전에 위에 참조한 이슈랑
-[거기서 참조하는 이 리포](https://github.com/valinet/ssde)는 한번 훑어보시는 걸 추천드립니다.
+!!! info "**참고**"
+    일단 이걸 하기 전에 위에 참조한 이슈랑
+    [거기서 참조하는 이 리포](https://github.com/valinet/ssde)는 한번 훑어보시는 걸 추천드립니다.
 
 ## 인증서 만들기
 인증서를 만드는 방법은 [이 문서에 잘 설명되어 있다](https://github.com/HyperSine/Windows10-CustomKernelSigners/blob/master/asset/build-your-own-pki.md).
@@ -75,8 +77,9 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 우리가 할 것은 이 기기에서 작동하는 인증서를 만드는 것인데, 이 기기에서만 작동하는 '가상의 인증서 키
 발급 기관' 같은 걸 만든 다음 그 기관의 인증서를 이용해서 **UEFI 플랫폼 키 인증서**와
 **커널 모드 드라이버 인증서**를 만들 것이다.
+참고로 윈도우 11에서도 잘 된다고 한다.
 
-**일단 powershell을 관리자 모드로 열고, 닫지 말고 계속 켜놓아야 한다.**
+**'인증서 만들기'를 하는 동안 powershell을 관리자 모드로 열고, 닫지 말고 계속 켜놓아야 한다.**
 
 ### '인증서 발급 기관' (Root CA Certificate) 생성
 어떤 Root CA 자체의 인증서가 신뢰된다면 그 CA가 발급한 다른 인증서도 마천가지로 신뢰될 것이다.
@@ -112,12 +115,100 @@ $root_cert = New-SelfSignedCertificate @cert_params
   - `&pathlength=x`를 넣는다면 이 CA가 발급한 인증서로 인증서를 발급하고, 그걸로 또 인증서를
     발급할 수 있는지, 얼마나 발급할 수 있는지를 말해준다. 필요하면 원문을 참고해라.
 
-이 명령어를 실행한 후 `certlm.msc`를 실행해서 `개인용/인증서` 또는 `Personal\Certificates`에
+이 명령어를 실행한 후 `certlm.msc`를 실행해서 `개인용\인증서` 또는 `Personal\Certificates`에
 새롭게 발급한 비밀키가 포함된 인증서 1(이름이 `Localhost Root Certification Authority`인 것)을
 확인할 수 있다.  
-그리고 `중간 인증 기관/인증서` 또는 `Intermediate Certification Authority\Certificates`에서
+그리고 `중간 인증 기관\인증서` 또는 `Intermediate Certification Authority\Certificates`에서
 비밀키 없이 공개키만 있는 인증서 2(이름이 마천가지)를 확인할 수 있다. 이 '인증서 2'를
-`신뢰할 수 있는 루트 인증/인증서`(또는 `Trusted Root Certification Authority\Certificates`)로
+`신뢰할 수 있는 루트 인증\인증서`(또는 `Trusted Root Certification Authority\Certificates`)로
 드래그해서 옮긴다. 그럼 인증서 1과 인증서 2 모두가 인증되었다고 뜬다.
 
+이제 **UEFI 플랫폼 키 인증서**와 **커널 모드 드라이버 인증서**를 만들어보자.
 
+
+### 커널 모드 드라이버 인증서 만들기
+아래 코드를 복붙한다.
+
+``` powershell
+$cert_params = @{
+    Type = 'CodeSigningCert'
+    Subject = 'CN=Localhost Kernel Mode Driver Certificate'
+    FriendlyName = 'Localhost Kernel Mode Driver Certificate'
+    TextExtension = '2.5.29.19={text}CA=0'
+    Signer = $root_cert
+    HashAlgorithm = 'sha256'
+    KeyLength = 2048
+    KeyAlgorithm = 'RSA'
+    KeyUsage = 'DigitalSignature'
+    KeyExportPolicy = 'Exportable'
+    NotAfter = (Get-Date).AddYears(10)
+    CertStoreLocation = 'Cert:\LocalMachine\My'
+}
+
+$km_cert = New-SelfSignedCertificate @cert_params
+```
+
+`certlm.msc`를 닫고 나서 다시 실행하여 `개인용\인증서` 또는 `Personal\Certificates`에 새로 생긴
+`Localhost Kernel Mode Driver Certificate`라는 이름의 인증서를 확인한다.
+
+
+### UEFI 플랫폼 키 인증서 인증서 만들기
+아래 코드를 복붙한다.
+
+``` powershell
+$cert_params = @{
+    Type = 'Custom'
+    Subject = 'CN=Localhost UEFI Platform Key Certificate'
+    FriendlyName = 'Localhost UEFI Platform Key Certificate'
+    TextExtension = '2.5.29.19={text}CA=0'
+    Signer = $root_cert
+    HashAlgorithm = 'sha256'
+    KeyLength = 2048
+    KeyAlgorithm = 'RSA'
+    KeyUsage = 'DigitalSignature'
+    KeyExportPolicy = 'Exportable'
+    NotAfter = (Get-Date).AddYears(10)
+    CertStoreLocation = 'Cert:\LocalMachine\My'
+}
+
+$pk_cert = New-SelfSignedCertificate @cert_params
+```
+
+`certlm.msc`를 닫고 나서 다시 실행하여 `개인용\인증서` 또는 `Personal\Certificates`에 새로 생긴
+`Localhost UEFI Platform Key Certificate`라는 이름의 인증서를 확인한다.
+
+
+### 인증서 만들기 마무리
+이제 만든 세 인증서를 내보낸다. 내보내는 방법은 `certlm.msc`에서 `개인용\인증서`에 가서 각 인증서를
+더블클릭한 후 자세히 > 파일에 복사를 누른다. 인증서 내보내기 마법사에서 아래 옵션을 선택한다.
+
+- `예, 개인 키를 내보냅니다.` 선택
+- 기본값 (개인정보 교환 - PKCS #12, 가능한 경우 인증 경로에 있는 인증서 모두 포함, 인증서 개인 정보 사용)
+- '암호' 선택: 암호를 입력하고 '암호화' 칸에서 `AES256-SHA256` 선택
+- 내보낼 경로 선택, 파일 이름은 저기 아래를 참고
+
+이 방법으로 `.pfx` 확장자의 개인용 키를 내보냈을 것이다. 그 다음 같은 인증서로 위 과정을 다시 반복하되,
+아래 옵션을 선택한다.
+
+- `아니오, 개인 키를 내보내지 않습니다.` 선택
+- 기본값 (`DER로 인코딩된 바이너리 X.509` 선택)
+
+이제 `.cer` 확장자의 파일도 생겼을 것이다.  
+이 과정을 세 인증서에 대해 반복하되, 파일의 이름은 아래와 같이 한다.
+```
+// Root CA 인증서
+localhost-root-ca.cer
+localhost-root-ca.pfx
+
+// 커널 모드 드라이버 인증서
+localhost-km.cer
+localhost-km.pfx
+
+// UEFI 플랫폼 키 인증서
+localhost-pk.cer
+localhost-pk.pfx
+```
+
+
+## UEFI 펌웨어의 플랫폼 키 설정
+... 설정하고 올게요 빠이염
