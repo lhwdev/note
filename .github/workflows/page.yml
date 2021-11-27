@@ -14,5 +14,4 @@ jobs:
       - name: Install requirements
         run: |
           pip install mkdocs-macros-plugin
-          pip install git+git://github.com/aleray/mdx_del_ins.git
       - run: mkdocs gh-deploy --force
