@@ -11,5 +11,7 @@ jobs:
     container: squidfunk/mkdocs-material
     steps:
       - uses: actions/checkout@v2
-      - run: pip install mkdocs-macros-plugin
+      - run: |
+          pip install mkdocs-macros-plugin
+          pip install mdx_del_int
       - run: mkdocs gh-deploy --force
