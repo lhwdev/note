@@ -27,9 +27,9 @@ theme:
     - navigation.instant
 
 markdown_extensions:
-  - del_ins
   - pymdownx.highlight:
       use_pygments: true
+  - pymdownx.tilde
   - pymdownx.inlinehilite
   - admonition
   - pymdownx.superfences
