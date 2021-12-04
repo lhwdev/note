@@ -86,12 +86,17 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 
 아래의 지시사항을 다 따른다면 아래와 같은 파일 구조가 만들어진다.
 ``` markdown
-localhost-ca
+root-ca
 - private.key
 - cert-request.conf
 - cert-request.csr
 - cert.cer
-
+- serial.srl
+platform-key
+- private.key
+- cert-request.conf
+- cert-request.csr
+- cert.cer
 ```
 
 ### OpenSSL 설치
@@ -110,9 +115,9 @@ Chocolatey가 깔려있는 사람이라면 관리자 권한 셸에서 `#!powersh
 발급받는 것이다.
 
 
-`localhost-ca` 폴더를 만들고 아래 명령어를 실행해라.
+`root-ca` 폴더를 만들고 아래 명령어를 실행해라.
 ``` powershell
-cd localhost-ca
+cd root-ca
 
 # 비공개 키 생성하기
 openssl genrsa -aes256 -out private.key 2048
@@ -126,7 +131,8 @@ openssl genrsa -aes256 -out private.key 2048
 
 
 그 다음, 아래 내용을 복붙한 후 원하는 내용은 수정하고 `cert-request.conf`이라는 이름으로 저장하자.
-```
+countryName같은 것들은 수정하거나 지우지 말고, 대신 countryName_default같은 걸 수정하면 된다.
+``` properties
 [ req ]
 default_bits = 2048
 default_md = sha256
@@ -136,25 +142,29 @@ extensions = v3_ca
 req_extensions = v3_ca
 
 [ v3_ca ]
-basicConstraints = critical, CA:TRUE, pathlen:0
+basicConstraints = critical, CA:TRUE # , pathlen:0 # 이 옵션은 '중간 CA'의 최대 개수를 조절할 수 있다.
 subjectKeyIdentifier = hash
 keyUsage = keyCertSign, cRLSign
 nsCertType = sslCA, emailCA, objCA
 
 [ localhost_root_ca ]
+countryName = Country Name (2 letter code)
 countryName_default = 
 
 # 기관
+organizationName = Organization Name (eg, company)
 organizationName_default = Localhost
 
 # 기관 부서
+organizationalUnitName = Organizational Unit Name (eg, section)
 organizationalUnitName_default  = 
 
 # 이 인증서의 이름
+commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost Root Certification Authority
 ```
 
-터미널로 돌아와서 아래 명령어를 입력하자.
+터미널로 돌아와서 아래 명령어를 입력해서 인증서 요청 파일(CSR)을 만들자.
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
@@ -208,7 +218,7 @@ openssl genrsa -aes256 -out private.key 2048
 
 그 다음, 또 다시 `cert-request.conf`를 만들고 복붙하자.
 
-```
+``` properties
 [ req ]
 default_bits = 2048
 default_md = sha256
@@ -216,7 +226,7 @@ default_keyfile = private.key
 distinguished_name = localhost_uefi_platform_key
 extensions = v3_user
 
-[ v3_ca ]
+[ v3_user ]
 basicConstraints = CA:FALSE
 authorityKeyIdentifier = keyid, issuer
 subjectKeyIdentifier = hash
@@ -224,17 +234,44 @@ keyUsage = digitalSignature
 nsCertType = sslCA, emailCA, objCA
 
 [ localhost_uefi_platform_key ]
+countryName = Country Name (2 letter code)
 countryName_default = 
 
 # 기관
+organizationName = Organization Name (eg, company)
 organizationName_default = Localhost
 
 # 기관 부서
+organizationalUnitName = Organizational Unit Name (eg, section)
 organizationalUnitName_default  = 
 
 # 이 인증서의 이름
+commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost UEFI Platform Key Certificate
 ```
+
+아래 명령어로 인증서 발급 요청(CSR) 파일을 만들자.
+``` powershell
+openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
+```
+마천가지로 비번을 입력하고, 엔터를 연타해준다.
+
+이제 인증서를 만들어보자.
+``` powershell
+openssl x509 -req -days 18250 -extensions v3_user `
+  -in cert-request.csr `
+  -CA ../root-ca/cert.cer -CAcreateserial -CAserial ../root-ca/serial.srl `
+  -CAkey ../root-ca/private.key `
+  -extfile cert-request.conf -out cert.cer
+```
+
+- `-CA ...`: CA 인증서의 경로
+- `-CAkey ...`: CA 비공개 키의 경로
+- `-CAcreateserial -CAserial ../root-ca/serial.srl`: serial 파일을 만들고 serial.srl 파일에
+  저장한다. 이것은 이 루트 인증서로 만드는 인증서들의 시리얼 넘버가 겹치지 않게 해준다.
+  만약 이 명령어를 여러번 실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`은 빼야 한다.
+
+
 
 **여기부터는 만드는 중**
 
