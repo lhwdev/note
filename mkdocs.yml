@@ -48,5 +48,6 @@ nav:
   - Jetpack compose:
     - compose/how-it-works.md
   - Other:
-    - other/windows-self-driver-signing.md
+    - 윈도우에서 직접 드라이버 서명하기: other/windows-self-driver-signing.md
+    - 윈도우에서 직접 드라이버 서명하기 2차(삽질 중): other/windows-self-driver-signing-v2.md
 
