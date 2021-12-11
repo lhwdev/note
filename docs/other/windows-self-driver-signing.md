@@ -109,21 +109,21 @@ kernel-mode
 
 ### OpenSSL 설치
 깃을 설치할 때 기본값으로 OpenSSL이 번들되어 있는데, 그걸 쓰고싶다면
-[이 StackOverflow 답변](https://stackoverflow.com/a/51757939/10744716)을 참고하자.
+[이 StackOverflow 답변](https://stackoverflow.com/a/51757939/10744716)을 참고하세요.
 
-나는 걍 깔고 싶어서 걍 깔았다.
+저는 걍 깔고 싶어서 걍 깔았어요.
 Chocolatey가 깔려있는 사람이라면 관리자 권한 셸에서 `#!powershell choco install openssl`을 치기만 하면
-된다. 터미널을 껐다 켜기 싫으면 `#!powershell refreshenv`만 치면 된다.
+됩니다. 터미널을 껐다 켜기 싫으면 `#!powershell refreshenv`만 치면 돼요.
 
 
 ### '인증서 발급 기관' (Root CA Certificate) 생성
-어떤 Root CA 자체의 인증서가 신뢰된다면 그 CA가 발급한 다른 인증서도 마천가지로 신뢰될 것이다.
-예를 들어 WIZVERA라는 CA 인증기관을 믿을 수 있다면, 그 인증기관에서 발급한 인증서도 믿을 수 있다.
-그래서 우리가 HTTPS 서명을 만들려면 어떤 인증서 발급기관에서 돈을 주고(물론 무료도 있다) 인증서를
-발급받는 것이다.
+어떤 Root CA 자체의 인증서가 신뢰된다면 그 CA가 발급한 다른 인증서도 마천가지로 신뢰될 것입니다.
+예를 들어 WIZVERA라는 CA 인증기관을 믿을 수 있다면, 그 인증기관에서 발급한 인증서도 믿을 수 있는데요,
+그래서 우리가 HTTPS 서명을 만들려면 어떤 인증서 발급기관에서 돈을 주고(물론 무료도 있지만) 인증서를
+발급받는 것이에요.
 
 
-`root-ca` 폴더를 만들고 아래 명령어를 실행해라.
+`root-ca` 폴더를 만들고 아래 명령어를 실행하세요.
 ``` powershell
 cd root-ca
 
@@ -132,14 +132,14 @@ openssl genrsa -aes256 -out private.key 2048
 ```
 이 명령어를 설명해보자면,
 
-- `-aes256`: 생성되는 비공개 키를 암호화해서 보관한다. 즉 암호를 암호화하는 옵션인 것이다. 비밀번호를
-  입력하는 게 귀찮다면 생략해도 되긴 한데 가능하면 설정하자.
-- `-out private.key`: 'private.key'라는 파일로 내보낸다.
-- `2048`: 키의 길이를 2048비트로 한다.
+- `-aes256`: 생성되는 비공개 키를 암호화해서 보관함. 즉 암호를 암호화하는 옵션인 것. 비밀번호를
+  입력하는 게 귀찮다면 생략해도 되긴 한데 가능하면 설정하는 게 좋아요.
+- `-out private.key`: 'private.key'라는 파일로 내보냄.
+- `2048`: 키의 길이를 2048비트로.
 
 
-그 다음, 아래 내용을 복붙한 후 원하는 내용은 수정하고 `cert-request.conf`이라는 이름으로 저장하자.
-countryName같은 것들은 수정하거나 지우지 말고, 대신 countryName_default같은 걸 수정하면 된다.
+그 다음, 아래 내용을 복붙한 후 원하는 내용은 수정하고 `cert-request.conf`이라는 이름으로 저장하세요.
+countryName같은 것들은 수정하거나 지우지 말고, 대신 countryName_default같은 걸 수정하면 됩니다.
 ``` properties
 [ req ]
 default_bits = 2048
@@ -171,12 +171,12 @@ commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost Root Certification Authority
 ```
 
-터미널로 돌아와서 아래 명령어를 입력해서 인증서 요청 파일(CSR)을 만들자.
+터미널로 돌아와서 아래 명령어를 입력해서 인증서 요청 파일(CSR)을 만들으세요.
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
 
-아래처럼 뜰 것이다.
+아래처럼 뜰 것입니다.
 ```
 Enter pass phrase for private.key:
 You are about to be asked to enter information that will be incorporated
@@ -191,30 +191,30 @@ Organization Name (eg, company) [Localhost]:
 Organizational Unit Name (eg, section) []:
 Common Name (eg, your name or your server's hostname) [Localhost Root Certification Authority]:
 ```
-비밀번호를 입력하고, 나머지는 `cert-request.conf` 파일에서 설정했기 때문에 엔터를 연타해주면 자동으로 넘어간다.
+비밀번호를 입력하고, 나머지는 `cert-request.conf` 파일에서 설정했기 때문에 엔터를 연타해주면 자동으로 넘어갑니다.
 
-그럼 `cert-request.csr` 파일이 생겼을 것이다. 아래의 명령어로 실제 인증서를 만들어주자.
+그럼 `cert-request.csr` 파일이 생겼을 것입니다. 아래의 명령어로 실제 인증서를 만들어줍니다.
 ```powershell
 openssl x509 -req -days 18250 -extensions v3_ca `
   -in cert-request.csr -signkey private.key `
   -out cert.cer -extfile cert-request.conf
 ```
 
-- `-days 18250`에서 18250을 원하는 날짜로 수정해주면 된다. 18250일은 약 10년이다. (정확하게는 265 * 10)
-- `-extensions v3_ca`는 이게 CA용 인증서라는 정보를 붙여준다. 어디선가 반드시 추가하란다.
-- 나머지는 다 파일이름을 넣어주는 것이다.
+- `-days 18250`에서 18250을 원하는 날짜로 수정해주면 됩니다. 18250일은 약 50년입니다. (정확하게는 365 * 50)
+- `-extensions v3_ca`는 cert-request.conf에서 `[ v3_ca ]`라는 부분에서 정보를 불러오도록 해줍니다
+- 나머지는 다 파일이름을 넣어주는 것입니다.
 
 
-이제 나온 `cert.cer` 파일을 윈도우에 박아줘야 한다. 이 인증서를 더블클릭해서 열고 '인증서 설치' > 저장소 위치를
+이제 나온 `cert.cer` 파일을 윈도우에 박아줘야 합니다. 이 인증서를 더블클릭해서 열고 '인증서 설치' > 저장소 위치를
 '로컬 컴퓨터'로 > '모든 인증서를 다음 저장소에 저장'에서 '찾아보기'의 '신뢰할 수 있는 루트 인증 기관(Trusted Root
-Certification Authority)'를 선택하고 설치하면 된다.
+Certification Authority)'를 선택하고 설치하면 됩니다.
 
 
-이제 **UEFI 플랫폼 키 인증서**와 **커널 모드 드라이버 인증서**를 만들어보자.
+이제 **UEFI 플랫폼 키 인증서**와 **커널 모드 드라이버 인증서**를 만들어봅시다.
 
 
 ### UEFI 플랫폼 키 인증서 인증서 만들기
-상위 폴더에서 platform-key 폴더를 만들고 아래 코드를 실행한다.
+상위 폴더에서 platform-key 폴더를 만들고 아래 코드를 실행합니다.
 
 ``` powershell
 cd ../platform-key
@@ -223,7 +223,7 @@ cd ../platform-key
 openssl genrsa -aes256 -out private.key 2048
 ```
 
-그 다음, 또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙하자.
+그 다음, 또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙하세요.
 
 ``` properties
 [ req ]
@@ -256,13 +256,13 @@ commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost UEFI Platform Key Certificate
 ```
 
-아래 명령어로 인증서 발급 요청(CSR) 파일을 만들자.
+아래 명령어로 인증서 발급 요청(CSR) 파일을 만듭니다.
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
-마천가지로 비번을 입력하고, 엔터를 연타해준다.
+마천가지로 비번을 입력하고, 엔터를 연타해줍니다.
 
-이제 인증서를 만들어보자.
+이제 인증서를 만들도록 하겠습니다.
 ``` powershell
 openssl x509 -req -days 18250 -extensions v3_req `
   -in cert-request.csr `
@@ -274,29 +274,29 @@ openssl x509 -req -days 18250 -extensions v3_req `
 - `-CA ...`: CA 인증서의 경로
 - `-CAkey ...`: CA 비공개 키의 경로
 - `-CAcreateserial -CAserial ../root-ca/serial.srl`: serial 파일을 만들고 serial.srl 파일에
-  저장한다. 이것은 이 루트 인증서로 만드는 인증서들의 시리얼 넘버가 겹치지 않게 해준다.
-  만약 이 명령어를 여러번 실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`은 빼야 한다.
+  저장. 이 루트 인증서로 만드는 인증서들의 시리얼 넘버가 겹치지 않게 해줍니다.
+  만약 이 명령어를 여러번 실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`은 빼야 합니다.
 
 
 ### UEFI 펌웨어의 플랫폼 키(PK) 설정
 ![Set-SecureBootUefi success](set-securebootuefi.png)
 *<p align="center">지린다</p>*
 
-여기서는 본인의 컴퓨터마다 쓸 수 있는 방법이 상이하다. 나의 경우 Dell 노트북이었는데, UEFI 설정에
-'Expert Key Management'라는 PK를 설정할 수 있는 곳이 있었는데 결론적으로는 아주 잘 작동하지 않았다.
-무언가가 심하게 고장난 듯 하다. 하지만! 파워셸 명령어인 `#!powreshell Set-SecureBootUefi`을 써서
-작동하게 했다.
+여기서는 본인의 컴퓨터마다 쓸 수 있는 방법이 상이합니다. 저의 경우 Dell 노트북이었는데, UEFI 설정에
+'Expert Key Management'라는 PK를 설정할 수 있는 곳이 있었는데 결론적으로는 아주 잘 작동하지 않았습니다.
+무언가가 심하게 고장난 듯? 하지만! 파워셸 명령어인 `#!powreshell Set-SecureBootUefi`을 써서
+작동하게 했습니다.
 
 일단 한번에 키를 다 만들어놓고 이걸 하고 싶다면 아래 문단 '커널 모드 드라이버 인증서 만들기'를 먼저 해도
-된다. 다만 다 만들어놓고 설정을 못한다면 상실감이 클테니 이걸 먼저 하는 것을 권장한다.
+됩니다. 다만 다 만들어놓고 설정을 못한다면 상실감이 클테니 이걸 먼저 하는 것을 권장합니다.
 
-우선 본인 UEFI 설정에서 이걸 정하는 기능이 있는지 확인해보고, 있다면 그 방법을 시도해보자.  
-이 방법도 UEFI에 따라 될 수도, 안될 수도 있다.
+우선 본인 UEFI 설정에서 이걸 정하는 기능이 있는지 확인해보고, 있다면 그 방법을 시도해보세요.  
+이 방법도 UEFI에 따라 될 수도, 안될 수도 있습니다.
 
-필자는 [WSL](https://docs.microsoft.com/windows/wsl/about)을 통해 `efitools`를 설치해서 했다.
-사실 저 efitools의 윈도우용 대안을 찾지 못해서 이렇게 한 것이다. 만약 대안을 찾았다면 이 문서에 PR 좀...
+필자는 [WSL](https://docs.microsoft.com/windows/wsl/about)을 통해 `efitools`를 설치해서 했습니다.
+사실 저 efitools의 윈도우용 대안을 찾지 못해서 이렇게 한 것인데. 만약 대안을 찾았다면 이 문서에 PR 좀...
 
-일단 WSL 터미널로 들어간다.
+일단 WSL 터미널로 들어갑니다.
 
 ``` bash
 # platform-key 폴더로 이동
@@ -308,28 +308,28 @@ cert-to-efi-sig-list -g "$(cat /proc/sys/kernel/random/uuid)" cert.cer PK.unsign
 # esl 파일 서명
 sign-efi-sig-list -k private.key -c cert.cer PK PK.unsigned.esl PK.esl
 ```
-참고로 .esl 파일은 EFI Signature List의 약자로, UEFI 펌웨어에서 서명을 저장하는 방식의 일부이다.
+참고로 .esl 파일은 EFI Signature List의 약자로, UEFI 펌웨어에서 서명을 저장하는 방식의 일부입니다.
 esl 파일을 서명하면 보안이 더 좋으려나?
 
-설정하기 전에 esl 파일을 백업해두자.
+설정하기 전에 esl 파일을 백업합시다.
 ``` powershell
 Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
 ```
 
 그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 된다.) platform-key
-폴더로 이동한 후 아래 명령어를 입력한다.
+폴더로 이동한 후 아래 명령어를 입력합니다.
 
 ``` powershell
 Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.esl -Time $(Get-Date)
 ```
 
 만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나 UEFI가
-지원하지 않는 것이다.  
-만약 성공했다면, 축하한다. 반 이상 왔다.
+지원하지 않는 것입니다.  
+만약 성공했다면, 축하합니다. 반 이상 왔습니다.
 
 
 ### 커널 모드 드라이버 인증서 만들기
-상위 폴더에서 kernel-mode-driver 폴더를 만들고 아래 코드를 실행한다.
+상위 폴더에서 kernel-mode-driver 폴더를 만들고 아래 코드를 실행합니다.
 
 ``` powershell
 cd ../kernel-mode-driver
@@ -338,7 +338,7 @@ cd ../kernel-mode-driver
 openssl genrsa -aes256 -out private.key 2048
 ```
 
-그 다음, 또또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙하자.
+그 다음, 또또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙 ㄱㄱ
 
 ``` properties
 [ req ]
@@ -372,13 +372,13 @@ commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost Kernel Mode Driver Certificate
 ```
 
-아래 명령어로 인증서 발급 요청(CSR) 파일을 만들자.
+아래 명령어로 인증서 발급 요청(CSR) 파일을 만들어 주세요.
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
-마천가지로 비번을 입력하고, 엔터를 연타해준다.
+마천가지로 비번을 입력하고, 엔터를 연타해 줍니다.
 
-이제 인증서를 만들어보자.
+이제 인증서를 만듧니다.
 ``` powershell
 openssl x509 -req -days 18250 -extensions v3_req `
   -in cert-request.csr `
@@ -388,67 +388,9 @@ openssl x509 -req -days 18250 -extensions v3_req `
 ```
 
 - `-CAserial ../root-ca/serial.srl`: 만약 이 명령어를 위의 UEFI 플랫폼 키를 만들기 전에
-  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙여야 한다.
+  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙여야 합니다.
 
-
-아래 코드를 복붙한다.
-
-``` powershell
-$cert_params = @{
-    Type = 'CodeSigningCert'
-    Subject = 'CN=Localhost Kernel Mode Driver Certificate'
-    FriendlyName = 'Localhost Kernel Mode Driver Certificate'
-    TextExtension = '2.5.29.19={text}CA=0'
-    Signer = $root_cert
-    HashAlgorithm = 'sha256'
-    KeyLength = 2048
-    KeyAlgorithm = 'RSA'
-    KeyUsage = 'DigitalSignature'
-    KeyExportPolicy = 'Exportable'
-    NotAfter = (Get-Date).AddYears(10)
-    CertStoreLocation = 'Cert:\LocalMachine\My'
-}
-
-$km_cert = New-SelfSignedCertificate @cert_params
-```
-
-`certlm.msc`를 닫고 나서 다시 실행하여 `개인용\인증서` 또는 `Personal\Certificates`에 새로 생긴
-`Localhost Kernel Mode Driver Certificate`라는 이름의 인증서를 확인한다.
-
-
-
-### 인증서 만들기 마무리
-이제 만든 세 인증서를 내보낸다. 내보내는 방법은 `certlm.msc`에서 `개인용\인증서`에 가서 각 인증서를
-더블클릭한 후 자세히 > 파일에 복사를 누른다. 인증서 내보내기 마법사에서 아래 옵션을 선택한다.
-
-- `예, 개인 키를 내보냅니다.` 선택
-- 기본값 (개인정보 교환 - PKCS #12, 가능한 경우 인증 경로에 있는 인증서 모두 포함, 인증서 개인 정보 사용)
-- '암호' 선택: 암호를 입력하고 '암호화' 칸에서 `AES256-SHA256` 선택
-- 내보낼 경로 선택, 파일 이름은 저기 아래를 참고
-
-이 방법으로 `.pfx` 확장자의 개인용 키를 내보냈을 것이다. 그 다음 같은 인증서로 위 과정을 다시 반복하되,
-아래 옵션을 선택한다.
-
-- `아니오, 개인 키를 내보내지 않습니다.` 선택
-- 기본값 (`DER로 인코딩된 바이너리 X.509` 선택)
-
-이제 `.cer` 확장자의 파일도 생겼을 것이다.  
-이 과정을 세 인증서에 대해 반복하되, 파일의 이름은 아래와 같이 한다.
-```
-// Root CA 인증서
-localhost-root-ca.cer
-localhost-root-ca.pfx
-
-// 커널 모드 드라이버 인증서
-localhost-km.cer
-localhost-km.pfx
-
-// UEFI 플랫폼 키 인증서
-localhost-pk.cer
-localhost-pk.pfx
-```
-
-
+이제 필요한 세 인증서
 
 
 ## 참고
