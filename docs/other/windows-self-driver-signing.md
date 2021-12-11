@@ -17,11 +17,11 @@ date: 2021-11-16
     나중에 성공하면 스크립트로도 만들어서 배포할게요
 
 ## 왜?
-내가 온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌다. 그리고 평소에 음악을 들을 때
-FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트럼을 보면 좀 간지나기 때문에였다...
+내가 온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌습니다. 그리고 평소에 음악을 들을 때
+FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트럼을 보면 좀 간지나기 때문에...
 
-아무튼 이러한 짓거리에는 필수적으로 필요했던 게 바로 가상 오디오 장치였다. 이미 나와있는 것들은
-아래와 같았는데, 모두 만족스럽지 않았다.
+아무튼 이러한 짓거리에는 필수적으로 필요했던 게 바로 가상 오디오 장치였는데 이미 나와있는 것들은
+아래와 같았고 모두 만족스럽지 않았어요.
 
 - **VB Audio Cable**  
   무료 체험판의 경우 케이블 1개만 사용 가능.
@@ -34,8 +34,8 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 - **Virtual Audio Cable**  
   엄청 좋아보이는데 유료임.
 
-그러다가 Synchronous Audio Router(SAR)이라는 프로그램을 발견했다. 사실 오디오를 라우팅하거나 보정하는 거는 FL로 하면 되기
-때문에 전혀 문제가 되지 않았다. SAR은
+그러다가 Synchronous Audio Router(SAR)이라는 프로그램을 발견했어요. 사실 오디오를 라우팅하거나 보정하는 거는 FL로 하면 되기
+때문에 전혀 문제가 되지 않았습니다. SAR은
 
 - 동적으로 가상 오디오 장치 추가 (무제한! 그냥 윈도우가 버텨주는 한 계속 만들 수 있음)
 - 무료, 오픈소스임
@@ -48,38 +48,73 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 > Prereleases of SAR are unsigned. That means that it is required to enable testsigning boot option
   to make Windows load the driver. Else the driver won't be loaded.
 
-이 시점에, 나는 UEFI 설정에서 Secure Boot를 켜놨었고 곧 윈도우 11로 업그레이드할 계획이었다.
-그리고 보안을 고려하기도 했기 때문에 `testsigning` 부트 설정을 켜는 건 가능한 선택이 아니었다.
+이 시점에, 나는 UEFI 설정에서 Secure Boot를 켜놨었고 곧 윈도우 11로 업그레이드할 계획이었습니다.
+그리고 보안을 고려하기도 했기 때문에 `testsigning` 부트 설정을 켜는 건 가능한 선택이 아니었습니다.
 
-그러다가 [어느 한 이슈](https://github.com/eiz/SynchronousAudioRouter/issues/86)를 보게 되었다.
+그러다가 [어느 한 이슈](https://github.com/eiz/SynchronousAudioRouter/issues/86)를 보게 되었는데
 > UPDATE 3: SUCCESS!!!!!!!!! I am running the latest SAR in Reaper as we speak on windows 10 without testmode.
 
-어떤 사람이 성공했다고 한다. 그래서 나도 해보기로 했다. ㅋㅋㅋㅋㅋㅋㅋㅋ
-벌써부터 험난해보인다.
+어떤 사람이 성공했다고 해요. 그래서 저도 해보기로 했답니다. ㅋㅋㅋㅋㅋㅋㅋㅋ
+벌써부터 험난해보이는...
 
 
 ## 본격적으로 시작!
-내가 참조한 문서들은 저기 말한 '어느 한 이슈'에 설명되어 있는 방법이었다. 설명이 아주 불친절했다.
-실제로 불친절한지는 모르겠지만 (하지만 `its confusing and you have to jump back and forth between his guide and an older one` 라는 말이 있었다)
+내가 참조한 문서들은 저기 말한 '어느 한 이슈'에 설명되어 있는 방법을 (아주 많이) 변형해서 OpenSSL을 쓴
+방법이었어요. 설명이 아주 불친절하더라고요.
+실제로 불친절한지는 모르겠지만 (하지만 `its confusing and you have to jump back and forth between his guide and an older one` 라는 말이 있었다만)
 내가 한국인이란 점을 감안하면..
 
 시작하기 전에 자신의 기기에서 **UEFI 플랫폼 키**를 설정하는 방법이 있는지, 어떻게 하는지를 미리
-알아보자. UEFI가 지원하지 않는다면 이걸 할 수가 없다.
+알아보기를 권장합니다. UEFI가 지원하지 않는다면 이걸 할 수가 없습니다.
 
 !!! info "**참고**"
     일단 이걸 하기 전에 위에 참조한 이슈랑
     [거기서 참조하는 이 리포](https://github.com/valinet/ssde)는 한번 훑어보시는 걸 추천드립니다.
 
-## 인증서 만들기
-인증서를 만드는 방법은 [이 문서에 잘 설명되어 있다](https://github.com/HyperSine/Windows10-CustomKernelSigners/blob/master/asset/build-your-own-pki.md).
-하지만 혹시나 필요한 사람이 있을까봐 한국어로 번역하고 설명을 추가해봤다.
+## 인증서 만들기 / 설정
+인증서를 만드는 방법은 [이 문서에 잘 설명되어 있습니다](https://github.com/HyperSine/Windows10-CustomKernelSigners/blob/master/asset/build-your-own-pki.md).
+하지만 저 방법대로 했더니 내 UEFI(Dell임)가 인증서를 뱉길래 OpenSSL을 써서 다시 시도해보았습니다.
+(이제와서 보니 다시 시도할 필요가 있는지는 의문이지만...)
 
 우리가 할 것은 이 기기에서 작동하는 인증서를 만드는 것인데, 이 기기에서만 작동하는 '가상의 인증서 키
 발급 기관' 같은 걸 만든 다음 그 기관의 인증서를 이용해서 **UEFI 플랫폼 키 인증서**와
-**커널 모드 드라이버 인증서**를 만들 것이다.
-참고로 윈도우 11에서도 잘 된다고 한다.
+**커널 모드 드라이버 인증서**를 만들 것입니다.
+참고로 윈도우 11에서도 잘 된다고 합니다.
 
-**'인증서 만들기'를 하는 동안 powershell을 관리자 모드로 열고, 닫지 말고 계속 켜놓아야 한다.**
+이 글은 파워셸을 기준으로 설명합니다. cmd라면 알아서 바꾸시길... (예를 들어 줄 끝에 `\``가 있다면
+그걸 지우고 다음줄과 합치면 된다.)
+
+아래의 지시사항을 다 따른다면 아래와 같은 파일 구조가 만들어집니다.
+``` markdown
+root-ca
+- private.key
+- cert-request.conf
+- cert-request.csr
+- cert.cer
+- serial.srl
+platform-key
+- private.key
+- cert-request.conf
+- cert-request.csr
+- cert.cer
+- PK.unsigned.esl
+- PK.esl
+- PK.old.esl
+kernel-mode
+- private.key
+- cert-request.conf
+- cert-request.csr
+- cert.cer
+```
+
+### OpenSSL 설치
+깃을 설치할 때 기본값으로 OpenSSL이 번들되어 있는데, 그걸 쓰고싶다면
+[이 StackOverflow 답변](https://stackoverflow.com/a/51757939/10744716)을 참고하자.
+
+나는 걍 깔고 싶어서 걍 깔았다.
+Chocolatey가 깔려있는 사람이라면 관리자 권한 셸에서 `#!powershell choco install openssl`을 치기만 하면
+된다. 터미널을 껐다 켜기 싫으면 `#!powershell refreshenv`만 치면 된다.
+
 
 ### '인증서 발급 기관' (Root CA Certificate) 생성
 어떤 Root CA 자체의 인증서가 신뢰된다면 그 CA가 발급한 다른 인증서도 마천가지로 신뢰될 것이다.
@@ -87,46 +122,275 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 그래서 우리가 HTTPS 서명을 만들려면 어떤 인증서 발급기관에서 돈을 주고(물론 무료도 있다) 인증서를
 발급받는 것이다.
 
-아래 명령어를 실행해라.
-``` powershell
-$cert_params = @{
-    Type = 'Custom'
-    Subject = 'CN=Localhost Root Certification Authority'
-    FriendlyName = 'Localhost Root Certification Authority'
-    TextExtension = '2.5.29.19={text}CA=1'
-    HashAlgorithm = 'sha512'
-    KeyLength = 4096
-    KeyAlgorithm = 'RSA'
-    KeyUsage = 'CertSign','CRLSign'
-    KeyExportPolicy = 'Exportable'
-    NotAfter = (Get-Date).AddYears(100)
-    CertStoreLocation = 'Cert:\LocalMachine\My'
-}
 
-$root_cert = New-SelfSignedCertificate @cert_params
+`root-ca` 폴더를 만들고 아래 명령어를 실행해라.
+``` powershell
+cd root-ca
+
+# 비공개 키 생성하기
+openssl genrsa -aes256 -out private.key 2048
+```
+이 명령어를 설명해보자면,
+
+- `-aes256`: 생성되는 비공개 키를 암호화해서 보관한다. 즉 암호를 암호화하는 옵션인 것이다. 비밀번호를
+  입력하는 게 귀찮다면 생략해도 되긴 한데 가능하면 설정하자.
+- `-out private.key`: 'private.key'라는 파일로 내보낸다.
+- `2048`: 키의 길이를 2048비트로 한다.
+
+
+그 다음, 아래 내용을 복붙한 후 원하는 내용은 수정하고 `cert-request.conf`이라는 이름으로 저장하자.
+countryName같은 것들은 수정하거나 지우지 말고, 대신 countryName_default같은 걸 수정하면 된다.
+``` properties
+[ req ]
+default_bits = 2048
+default_md = sha256
+default_keyfile = private.key
+distinguished_name = localhost_root_ca
+extensions = v3_ca
+req_extensions = v3_ca
+
+[ v3_ca ]
+basicConstraints = critical, CA:TRUE # , pathlen:0 # 이 옵션은 '중간 CA'의 최대 개수를 조절할 수 있다.
+subjectKeyIdentifier = hash
+keyUsage = keyCertSign, cRLSign
+
+[ localhost_root_ca ]
+countryName = Country Name (2 letter code)
+countryName_default = 
+
+# 기관
+organizationName = Organization Name (eg, company)
+organizationName_default = Localhost
+
+# 기관 부서
+organizationalUnitName = Organizational Unit Name (eg, section)
+organizationalUnitName_default  = 
+
+# 이 인증서의 이름
+commonName = "Common Name (eg, your name or your server's hostname)"
+commonName_default = Localhost Root Certification Authority
 ```
 
-- `#!powershell (Get-Date).AddYears(100)`: 100년 대신 다른 원하는 값을 입력해도 된다.
-- `#!powershell TextExtension = '2.5.29.19={text}CA=1'`:
+터미널로 돌아와서 아래 명령어를 입력해서 인증서 요청 파일(CSR)을 만들자.
+``` powershell
+openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
+```
 
-  - `2.5.29.19`는 [`Basic Constraints`를 나타내는 OID이다](https://www.alvestrand.no/objectid/2.5.29.19.html).
-    즉, 이 인증서를 발급한 주체가 CA로 작용할 수 있다는 것이다.
-  - `CA=1`은 이 인증서가 CA 인증서라는 것이다.
-  - `&pathlength=x`를 넣는다면 이 CA가 발급한 인증서로 인증서를 발급하고, 그걸로 또 인증서를
-    발급할 수 있는지, 얼마나 발급할 수 있는지를 말해준다. 필요하면 원문을 참고해라.
+아래처럼 뜰 것이다.
+```
+Enter pass phrase for private.key:
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) []:
+Organization Name (eg, company) [Localhost]:
+Organizational Unit Name (eg, section) []:
+Common Name (eg, your name or your server's hostname) [Localhost Root Certification Authority]:
+```
+비밀번호를 입력하고, 나머지는 `cert-request.conf` 파일에서 설정했기 때문에 엔터를 연타해주면 자동으로 넘어간다.
 
-이 명령어를 실행한 후 `certlm.msc`를 실행해서 `개인용\인증서` 또는 `Personal\Certificates`에
-새롭게 발급한 비밀키가 포함된 인증서 1(이름이 `Localhost Root Certification Authority`인 것)을
-확인할 수 있다.  
-그리고 `중간 인증 기관\인증서` 또는 `Intermediate Certification Authority\Certificates`에서
-비밀키 없이 공개키만 있는 인증서 2(이름이 마천가지)를 확인할 수 있다. 이 '인증서 2'를
-`신뢰할 수 있는 루트 인증\인증서`(또는 `Trusted Root Certification Authority\Certificates`)로
-드래그해서 옮긴다. 그럼 인증서 1과 인증서 2 모두가 인증되었다고 뜬다.
+그럼 `cert-request.csr` 파일이 생겼을 것이다. 아래의 명령어로 실제 인증서를 만들어주자.
+```powershell
+openssl x509 -req -days 18250 -extensions v3_ca `
+  -in cert-request.csr -signkey private.key `
+  -out cert.cer -extfile cert-request.conf
+```
+
+- `-days 18250`에서 18250을 원하는 날짜로 수정해주면 된다. 18250일은 약 10년이다. (정확하게는 265 * 10)
+- `-extensions v3_ca`는 이게 CA용 인증서라는 정보를 붙여준다. 어디선가 반드시 추가하란다.
+- 나머지는 다 파일이름을 넣어주는 것이다.
+
+
+이제 나온 `cert.cer` 파일을 윈도우에 박아줘야 한다. 이 인증서를 더블클릭해서 열고 '인증서 설치' > 저장소 위치를
+'로컬 컴퓨터'로 > '모든 인증서를 다음 저장소에 저장'에서 '찾아보기'의 '신뢰할 수 있는 루트 인증 기관(Trusted Root
+Certification Authority)'를 선택하고 설치하면 된다.
+
 
 이제 **UEFI 플랫폼 키 인증서**와 **커널 모드 드라이버 인증서**를 만들어보자.
 
 
+### UEFI 플랫폼 키 인증서 인증서 만들기
+상위 폴더에서 platform-key 폴더를 만들고 아래 코드를 실행한다.
+
+``` powershell
+cd ../platform-key
+
+# 개인키 생성
+openssl genrsa -aes256 -out private.key 2048
+```
+
+그 다음, 또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙하자.
+
+``` properties
+[ req ]
+default_bits = 2048
+default_md = sha256
+default_keyfile = private.key
+distinguished_name = localhost_uefi_platform_key
+extensions = v3_req
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+authorityKeyIdentifier = keyid, issuer
+subjectKeyIdentifier = hash
+keyUsage = digitalSignature
+
+[ localhost_uefi_platform_key ]
+countryName = Country Name (2 letter code)
+countryName_default = 
+
+# 기관
+organizationName = Organization Name (eg, company)
+organizationName_default = Localhost
+
+# 기관 부서
+organizationalUnitName = Organizational Unit Name (eg, section)
+organizationalUnitName_default  = 
+
+# 이 인증서의 이름
+commonName = "Common Name (eg, your name or your server's hostname)"
+commonName_default = Localhost UEFI Platform Key Certificate
+```
+
+아래 명령어로 인증서 발급 요청(CSR) 파일을 만들자.
+``` powershell
+openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
+```
+마천가지로 비번을 입력하고, 엔터를 연타해준다.
+
+이제 인증서를 만들어보자.
+``` powershell
+openssl x509 -req -days 18250 -extensions v3_req `
+  -in cert-request.csr `
+  -CA ../root-ca/cert.cer -CAcreateserial -CAserial ../root-ca/serial.srl `
+  -CAkey ../root-ca/private.key `
+  -extfile cert-request.conf -out cert.cer
+```
+
+- `-CA ...`: CA 인증서의 경로
+- `-CAkey ...`: CA 비공개 키의 경로
+- `-CAcreateserial -CAserial ../root-ca/serial.srl`: serial 파일을 만들고 serial.srl 파일에
+  저장한다. 이것은 이 루트 인증서로 만드는 인증서들의 시리얼 넘버가 겹치지 않게 해준다.
+  만약 이 명령어를 여러번 실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`은 빼야 한다.
+
+
+### UEFI 펌웨어의 플랫폼 키(PK) 설정
+![Set-SecureBootUefi success](set-securebootuefi.png)
+*<p align="center">지린다</p>*
+
+여기서는 본인의 컴퓨터마다 쓸 수 있는 방법이 상이하다. 나의 경우 Dell 노트북이었는데, UEFI 설정에
+'Expert Key Management'라는 PK를 설정할 수 있는 곳이 있었는데 결론적으로는 아주 잘 작동하지 않았다.
+무언가가 심하게 고장난 듯 하다. 하지만! 파워셸 명령어인 `#!powreshell Set-SecureBootUefi`을 써서
+작동하게 했다.
+
+일단 한번에 키를 다 만들어놓고 이걸 하고 싶다면 아래 문단 '커널 모드 드라이버 인증서 만들기'를 먼저 해도
+된다. 다만 다 만들어놓고 설정을 못한다면 상실감이 클테니 이걸 먼저 하는 것을 권장한다.
+
+우선 본인 UEFI 설정에서 이걸 정하는 기능이 있는지 확인해보고, 있다면 그 방법을 시도해보자.  
+이 방법도 UEFI에 따라 될 수도, 안될 수도 있다.
+
+필자는 [WSL](https://docs.microsoft.com/windows/wsl/about)을 통해 `efitools`를 설치해서 했다.
+사실 저 efitools의 윈도우용 대안을 찾지 못해서 이렇게 한 것이다. 만약 대안을 찾았다면 이 문서에 PR 좀...
+
+일단 WSL 터미널로 들어간다.
+
+``` bash
+# platform-key 폴더로 이동
+cd $(wslpath "platform-key 폴더의 경로")
+
+# esl 파일 생성
+cert-to-efi-sig-list -g "$(cat /proc/sys/kernel/random/uuid)" cert.cer PK.unsigned.esl
+
+# esl 파일 서명
+sign-efi-sig-list -k private.key -c cert.cer PK PK.unsigned.esl PK.esl
+```
+참고로 .esl 파일은 EFI Signature List의 약자로, UEFI 펌웨어에서 서명을 저장하는 방식의 일부이다.
+esl 파일을 서명하면 보안이 더 좋으려나?
+
+설정하기 전에 esl 파일을 백업해두자.
+``` powershell
+Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
+```
+
+그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 된다.) platform-key
+폴더로 이동한 후 아래 명령어를 입력한다.
+
+``` powershell
+Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.esl -Time $(Get-Date)
+```
+
+만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나 UEFI가
+지원하지 않는 것이다.  
+만약 성공했다면, 축하한다. 반 이상 왔다.
+
+
 ### 커널 모드 드라이버 인증서 만들기
+상위 폴더에서 kernel-mode-driver 폴더를 만들고 아래 코드를 실행한다.
+
+``` powershell
+cd ../kernel-mode-driver
+
+# 개인키 생성
+openssl genrsa -aes256 -out private.key 2048
+```
+
+그 다음, 또또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙하자.
+
+``` properties
+[ req ]
+default_bits = 2048
+default_md = sha256
+default_keyfile = private.key
+distinguished_name = localhost_kernel_mode_driver
+extensions = v3_req
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+authorityKeyIdentifier = keyid, issuer
+subjectKeyIdentifier = hash
+keyUsage = digitalSignature
+extendedKeyUsage = codeSigning
+
+[ localhost_kernel_mode_driver ]
+countryName = Country Name (2 letter code)
+countryName_default = 
+
+# 기관
+organizationName = Organization Name (eg, company)
+organizationName_default = Localhost
+
+# 기관 부서
+organizationalUnitName = Organizational Unit Name (eg, section)
+organizationalUnitName_default  = 
+
+# 이 인증서의 이름
+commonName = "Common Name (eg, your name or your server's hostname)"
+commonName_default = Localhost Kernel Mode Driver Certificate
+```
+
+아래 명령어로 인증서 발급 요청(CSR) 파일을 만들자.
+``` powershell
+openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
+```
+마천가지로 비번을 입력하고, 엔터를 연타해준다.
+
+이제 인증서를 만들어보자.
+``` powershell
+openssl x509 -req -days 18250 -extensions v3_req `
+  -in cert-request.csr `
+  -CA ../root-ca/cert.cer -CAserial ../root-ca/serial.srl `
+  -CAkey ../root-ca/private.key `
+  -extfile cert-request.conf -out cert.cer
+```
+
+- `-CAserial ../root-ca/serial.srl`: 만약 이 명령어를 위의 UEFI 플랫폼 키를 만들기 전에
+  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙여야 한다.
+
+
 아래 코드를 복붙한다.
 
 ``` powershell
@@ -151,31 +415,6 @@ $km_cert = New-SelfSignedCertificate @cert_params
 `certlm.msc`를 닫고 나서 다시 실행하여 `개인용\인증서` 또는 `Personal\Certificates`에 새로 생긴
 `Localhost Kernel Mode Driver Certificate`라는 이름의 인증서를 확인한다.
 
-
-### UEFI 플랫폼 키 인증서 인증서 만들기
-아래 코드를 복붙한다.
-
-``` powershell
-$cert_params = @{
-    Type = 'Custom'
-    Subject = 'CN=Localhost UEFI Platform Key Certificate'
-    FriendlyName = 'Localhost UEFI Platform Key Certificate'
-    TextExtension = '2.5.29.19={text}CA=0'
-    Signer = $root_cert
-    HashAlgorithm = 'sha256'
-    KeyLength = 2048
-    KeyAlgorithm = 'RSA'
-    KeyUsage = 'DigitalSignature'
-    KeyExportPolicy = 'Exportable'
-    NotAfter = (Get-Date).AddYears(10)
-    CertStoreLocation = 'Cert:\LocalMachine\My'
-}
-
-$pk_cert = New-SelfSignedCertificate @cert_params
-```
-
-`certlm.msc`를 닫고 나서 다시 실행하여 `개인용\인증서` 또는 `Personal\Certificates`에 새로 생긴
-`Localhost UEFI Platform Key Certificate`라는 이름의 인증서를 확인한다.
 
 
 ### 인증서 만들기 마무리
@@ -210,8 +449,9 @@ localhost-pk.pfx
 ```
 
 
-## UEFI 펌웨어의 플랫폼 키 설정
-~~... 설정하고 올게요 빠이염~~
-... UEFI가 PK 인증서를 뱉어요.. 않이...
-제가 못했는데 튜토리얼을 짤 수는 없는데.. ㅋㅋㅋㅋㅋㅋ
-조졌다
+
+
+## 참고
+조금 유용한 문서들:
+
+- https://media.defense.gov/2020/Sep/15/2002497594/-1/-1/0/CTR-UEFI-Secure-Boot-Customization-UOO168873-20.PDF
