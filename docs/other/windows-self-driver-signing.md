@@ -81,6 +81,8 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 **커널 모드 드라이버 인증서**를 만들 것입니다.
 참고로 윈도우 11에서도 잘 된다고 합니다.
 
+파워셸을 **관리자 권한으로 실행해주세요.** (인증서 만들 때까지는 필요없는데 그 이후에 필요한 작업이
+몇 개 있습니다.)
 이 글은 파워셸을 기준으로 설명합니다. cmd라면 알아서 바꾸시길... (예를 들어 줄 끝에 `\``가 있다면
 그걸 지우고 다음줄과 합치면 된다.)
 
@@ -277,6 +279,13 @@ openssl x509 -req -days 18250 -extensions v3_req `
   저장. 이 루트 인증서로 만드는 인증서들의 시리얼 넘버가 겹치지 않게 해줍니다.
   만약 이 명령어를 여러번 실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`은 빼야 합니다.
 
+추가로, 나중에 윈도우 드라이버나 'Si Policy'를 서명할 때 필요하기 때문에(signtool을 쓰기 위해) private.key를
+.pfx 파일로 변환해줘야 합니다.
+
+``` powershell
+openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
+```
+
 
 ### UEFI 펌웨어의 플랫폼 키(PK) 설정
 ![Set-SecureBootUefi success](set-securebootuefi.png)
@@ -316,7 +325,7 @@ esl 파일을 서명하면 보안이 더 좋으려나?
 Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
 ```
 
-그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 된다.) platform-key
+그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 됩니다.) platform-key
 폴더로 이동한 후 아래 명령어를 입력합니다.
 
 ``` powershell
@@ -325,7 +334,7 @@ Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.
 
 만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나 UEFI가
 지원하지 않는 것입니다.  
-만약 성공했다면, 축하합니다. 반 이상 왔습니다.
+만약 성공했다면, 축하합니다. 이제 컴퓨터의 UEFI는 우리의 인증서 발급 기관(CA)을 신뢰할 거에요.
 
 
 ### 커널 모드 드라이버 인증서 만들기
@@ -390,7 +399,76 @@ openssl x509 -req -days 18250 -extensions v3_req `
 - `-CAserial ../root-ca/serial.srl`: 만약 이 명령어를 위의 UEFI 플랫폼 키를 만들기 전에
   실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙여야 합니다.
 
-이제 필요한 세 인증서
+
+한번 더, 나중에 윈도우 드라이버나 'Si Policy'를 서명할 때 필요하기 때문에(signtool을 쓰기 위해)
+private.key를 .pfx 파일로 변환해줘야 합니다.
+
+``` powershell
+openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
+```
+
+이제 필요한 세 인증서를 전부 만들어 보았습니다.
+
+
+## 서명 정책(Sign Policy; Si Policy) 설정
+원래 서명 정책을 담은 xml 파일을 만든 후 바이너리 파일로 만들어야 했는데, 이건 윈도우
+Enterprise/Education Edition에서만 할 수 있기 때문에
+[이미 만들어진 바이너리 파일을 다운받습니다.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
+
+이제 `selfsign.bin`을 서명해야 윈도우에서 정상적으로 인식하게 됩니다.
+
+``` powershell
+signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.key /p <# platform-key의 비밀번호 #> sipolicy/selfsign.bin
+```
+
+- `platform-key/private.key`: platform key의 비공개 키 경로
+- `sipolicy/selfsign.bin`: 바로 위에서 다운받은 파일
+
+이제 `selfsign.bin.p7`이라는 파일이 생겼을 것입니다. 파일의 이름을 `SiPolicy.p7b`로 바꿔주세요.
+그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 됩니다.) 아래 명령어를
+실행해주세요.
+
+``` powershell
+# EFI 시스템 파티션을 X: 드라이브에 마운트
+mountvol x: /s
+
+# SiPolicy 복사
+cp SiPolicy.p7b X:\EFI\Microsoft\Boot\
+
+# (안해도 상관은 없음?) EFI 볼륨 마운트해뒀던거 취소하기
+mountvol x: /d
+```
+
+## Custom Kernel Signer(CKS) 켜기
+CKS라는 이 값은 레지스트리의 `HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions`에 저장되어
+있다고 합니다. 이 값은 사실상 커널 초기화가 끝나지 않았을 때에만 설정할 수 있는데요, 자세한 원리는
+[원본 문서에서 확인할 수 있습니다](https://github.com/HyperSine/Windows10-CustomKernelSigners).
+저는 방법만 간단하게 설명할게요.
+
+[우선 이 url로 들어가서 ssde.zip을 받아주세요](https://github.com/valinet/ssde/releases).
+거기 안에 보면 ssde_enable.exe가 있습니다. 이걸 실행하기 전에 우선 이 설정이 유지되도록 ssde.sys
+드라이버를 서명해줄 거에요. 아래 명령어를 실행해주세요.
+
+``` powershell
+signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <비밀번호> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
+```
+
+이제 드디어 적용할 시간입니다. ssde_enable.exe를 실행해주면 UAC를 띄운 후 컴퓨터를 재부팅해서 설정한
+다음, 다시 재부팅할 겁니다. 이렇게 재부팅이 된 후 이 CKS 설정이 다음번에 부팅할 때에도 계속 유지되도록
+**위에서 서명한** ssde.sys를 설치해줄 겁니다.
+
+우선 CKS가 적용됐는지 ssde_query.exe를 파워셸/cmd에서 실행해보면 `0`이 뜬다면 실패, `1`이 뜬다면
+성공입니다. 여러번 시도해야 성공하는 경우도 있다고 하네요.  
+만약 성공했다면 ssde.sys를 설치해줄 건데요, 아래 명령어를 cmd실행해주세요.
+
+``` powershell
+cp ssde.sys $env:windir\system32\drivers\ssde.sys
+sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
+sc start ssde.sys
+```
+
+이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 정상적으로 실행됐다면 모든 것을 끝마친 겁니다.
+수고하셨어요.
 
 
 ## 참고
