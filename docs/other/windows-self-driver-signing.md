@@ -459,13 +459,17 @@ signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.p
 
 우선 CKS가 적용됐는지 ssde_query.exe를 파워셸/cmd에서 실행해보면 `0`이 뜬다면 실패, `1`이 뜬다면
 성공입니다. 여러번 시도해야 성공하는 경우도 있다고 하네요.  
-만약 성공했다면 ssde.sys를 설치해줄 건데요, 아래 명령어를 cmd실행해주세요.
+만약 성공했다면 ssde.sys를 설치해줄 건데요, 관리자 권한 파워셸에서 아래 명령어를 실행해주세요.
 
 ``` powershell
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
 sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 sc start ssde.sys
 ```
+
+사실 지금 이 부분을 하고 있는데, 생각보다 어렵네요.
+그렇게 쉽지 않네요. 지금 할 예정인 거는 PE(Preinstalled Environment)로 들어가서 하는 겁니다.
+여기서 저 드라이버를 설치하고 재부팅하면 블루스크린이 나기 때문에 PE로 들어가서 설정을 바꿔줘야 해요.
 
 이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 정상적으로 실행됐다면 모든 것을 끝마친 겁니다.
 수고하셨어요.
