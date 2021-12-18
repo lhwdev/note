@@ -305,6 +305,10 @@ openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 필자는 [WSL](https://docs.microsoft.com/windows/wsl/about)을 통해 `efitools`를 설치해서 했습니다.
 사실 저 efitools의 윈도우용 대안을 찾지 못해서 이렇게 한 것인데. 만약 대안을 찾았다면 이 문서에 PR 좀...
 
+**이 방법을 시도하기 전에 UEFI 설정에서 Secure Boot Mode를 적당하게 바꿔주세요.** 기본 모드에서는
+PK 같은 키들을 바꾸지 못하게 막아놨습니다. 제 UEFI(Dell)의 경우 'Deploy Mode'와 'Audit Mode'가 있었는데
+Audit Mode로 바꾸고 아래 명령어를 실행하니 됐습니다.
+
 일단 WSL 터미널로 들어갑니다.
 
 ``` bash
@@ -446,32 +450,32 @@ CKS라는 이 값은 레지스트리의 `HKLM\SYSTEM\CurrentControlSet\Control\P
 저는 방법만 간단하게 설명할게요.
 
 [우선 이 url로 들어가서 ssde.zip을 받아주세요](https://github.com/valinet/ssde/releases).
-거기 안에 보면 ssde_enable.exe가 있습니다. 이걸 실행하기 전에 우선 이 설정이 유지되도록 ssde.sys
-드라이버를 서명해줄 거에요. 아래 명령어를 실행해주세요.
+거기 안에 보면 ssde.sys가 있습니다. 이 드라이버를 서명해줄 건데요, 아래 명령어를 실행해주세요.
 
 ``` powershell
 signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <비밀번호> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
-이제 드디어 적용할 시간입니다. ssde_enable.exe를 실행해주면 UAC를 띄운 후 컴퓨터를 재부팅해서 설정한
-다음, 다시 재부팅할 겁니다. 이렇게 재부팅이 된 후 이 CKS 설정이 다음번에 부팅할 때에도 계속 유지되도록
-**위에서 서명한** ssde.sys를 설치해줄 겁니다.
+**혹시 컴퓨터를 다시 못 켤까봐 두려우신 분들은 WinPE(Windows Preinstalled Environment)를 설정하는 것을 추천드립니다.** 아래의 명령어를 실행한 후에는 윈도우 입장에서 ssde.sys가 알 수 없는 인증서로 서명되었는데,
+커널 드라이버라서 실행을 못하여서 Kernel fault를 일으키게 됩니다. 즉 블루스크린이 뜨거나 복구 환경으로 들어가게
+됩니다. 복구 환경으로 들어갈 수 있다면 다행이고, 아마 들어가질 겁니다. 하지만 만약 그렇지 않다면 다시 컴퓨터로
+부팅할 수 없을지도 모르니까요?  
+뭐 근데 아마 될거에요 제가 안해봐서..
 
-우선 CKS가 적용됐는지 ssde_query.exe를 파워셸/cmd에서 실행해보면 `0`이 뜬다면 실패, `1`이 뜬다면
-성공입니다. 여러번 시도해야 성공하는 경우도 있다고 하네요.  
-만약 성공했다면 ssde.sys를 설치해줄 건데요, 관리자 권한 파워셸에서 아래 명령어를 실행해주세요.
+
+이제 드디어 적용할 시간입니다. **위에서 서명한** ssde.sys를 설치해줄 겁니다.
+아래 명령어를 관리자 권한 파워셸에서 실행해주세요.
+(cmd라면 `#!powershell $env:windir`을 `#!bat %windir%`로 바꾸면 됩니다.)
 
 ``` powershell
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
 sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
-sc start ssde.sys
 ```
+이제 컴퓨터를 재부팅하면 아마 평소와 다르게 '시스템 복구 중' 같은 식으로 뜨다가 다른 창으로 넘어갈거에요.
 
-사실 지금 이 부분을 하고 있는데, 생각보다 어렵네요.
-그렇게 쉽지 않네요. 지금 할 예정인 거는 PE(Preinstalled Environment)로 들어가서 하는 겁니다.
-여기서 저 드라이버를 설치하고 재부팅하면 블루스크린이 나기 때문에 PE로 들어가서 설정을 바꿔줘야 해요.
+**아직 작성 중**
 
-이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 정상적으로 실행됐다면 모든 것을 끝마친 겁니다.
+이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 드라이버가 정상적으로 실행됐다면 모든 것을 끝마친 겁니다.
 수고하셨어요.
 
 
