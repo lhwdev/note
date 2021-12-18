@@ -288,7 +288,7 @@ openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 
 
 ### UEFI 펌웨어의 플랫폼 키(PK) 설정
-![Set-SecureBootUefi success](set-securebootuefi.png)
+![Set-SecureBootUefi success](ssd/set-securebootuefi.png)
 *<p align="center">지린다</p>*
 
 여기서는 본인의 컴퓨터마다 쓸 수 있는 방법이 상이합니다. 저의 경우 Dell 노트북이었는데, UEFI 설정에
@@ -460,7 +460,7 @@ signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.p
 커널 드라이버라서 실행을 못하여서 Kernel fault를 일으키게 됩니다. 즉 블루스크린이 뜨거나 복구 환경으로 들어가게
 됩니다. 복구 환경으로 들어갈 수 있다면 다행이고, 아마 들어가질 겁니다. 하지만 만약 그렇지 않다면 다시 컴퓨터로
 부팅할 수 없을지도 모르니까요?  
-뭐 근데 아마 될거에요 제가 안해봐서..
+뭐 근데 아마 될거에요?
 
 
 이제 드디어 적용할 시간입니다. **위에서 서명한** ssde.sys를 설치해줄 겁니다.
@@ -471,15 +471,50 @@ signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.p
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
 sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 ```
-이제 컴퓨터를 재부팅하면 아마 평소와 다르게 '시스템 복구 중' 같은 식으로 뜨다가 다른 창으로 넘어갈거에요.
+**아래 부분은 종이에 적어놓거나 휴대폰으로 보시는 걸 추천드립니다. 외웠다가 까먹으면 망해요..**  
+이제 컴퓨터를 재부팅하면 아마 평소와 다르게 블루스크린이 뜨거나 '시스템 복구 중' 같은 식으로 뜨다가 다른 창으로
+넘어갈거에요. 이것은 부팅이 실패했고 커널 패닉이 일어났다는 뜻입니다.  
 
-**아직 작성 중**
+> 자동 복구에서 PC를 복구하지 못했습니다.
 
-이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 드라이버가 정상적으로 실행됐다면 모든 것을 끝마친 겁니다.
+이제 이 부분에서 **고급 옵션**으로 들어가고, **문제 해결 > 고급 옵션 > 명령 프롬프트**를 선택합니다.
+계정을 선택하고 비번을 입력하면 cmd 창이 뜰겁니다. 여기서 `#!bat regedit`을 입력하면 레지스트리 편집기가
+뜹니다.
+`HKEY_LOCAL_MACHINE`을 선택한 다음 `파일(F)` > `하이브 로드(L)...`을 누르고 윈도우가 설치된 경로에서
+(보통 `C:/Windows`, 복구모드에선 다른 드라이브에 마운트됐을 수도 있어요) `System32 > config > SYSTEM`을 열어서
+아무 이름 입력, 확인을 누릅니다. 그럼 `HKEY_LOCAL_MACHINE` 아래에 해당 '아무 이름'이라는 키가 뜰거에요.
+
+해당 키에서 `ControlSet001` > `Control` > `CI` > `Protected`에 보면 `Licensed`라는 게 보일 거에요.
+더블클릭해서 **기존의 값 0을 1로 바꾸고** 확인을 눌러줍니다.
+
+![set-licensed](ssd/set-licensed.jpg)
+이렇게요.
+
+이제 할 일을 끝마쳤습니다. 레지스트리 편집기와 cmd 창을 닫고 다시 부팅을 하면 아마 정상적으로 될 거에요.
+이제 ssde.zip을 풀은 폴더에 보면 ssde_info.exe라는 프로그램이 있는데 cmd나 파워셸에서 실행시켜 주세요.
+무언가 오류가 아닌 것처럼 생긴 게 아래처럼 뜨면 반쯤 성공입니다.
+
+```
+API version is 1.1
+Arm count is 2
+Arm watchdog status is 1
+License tamper state is 0
+```
+이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 정상적으로 실행됐다면 거의 다 끝났습니다.
+
+이제 컴퓨터를 다시 시작해 보세요. '자동 복구에서 PC를 복구하지 못했습니다.'가 다시 뜰 가능성이 높습니다.
+만약 안뜬다면 정상적으로 끝난 것이고, 만약 뜬다면 위에 설명한 것을 다시 실행하면 됩니다.
+
 수고하셨어요.
 
 
 ## 참고
+기본적으로 참고한 문서:
+
+- [안정적인 방법: valinet/ssde](https://github.com/valinet/ssde)
+- [최초로 성공한 사례: HyperSine/Windows10-CustomKernelSigners](https://github.com/HyperSine/Windows10-CustomKernelSigners)
+- [원본 PoC: Licensed Driver Signing in Windows 10](https://www.geoffchappell.com/notes/windows/license/customkernelsigners.htm)
+
 조금 유용한 문서들:
 
-- https://media.defense.gov/2020/Sep/15/2002497594/-1/-1/0/CTR-UEFI-Secure-Boot-Customization-UOO168873-20.PDF
+- [미국 국방부에서 Secure Boot에 관해 쓴 글](https://media.defense.gov/2020/Sep/15/2002497594/-1/-1/0/CTR-UEFI-Secure-Boot-Customization-UOO168873-20.PDF)
