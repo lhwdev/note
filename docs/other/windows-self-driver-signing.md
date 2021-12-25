@@ -59,8 +59,10 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 실제로 불친절한지는 모르겠지만 (하지만 `its confusing and you have to jump back and forth between his guide and an older one` 라는 말이 있었다만)
 내가 한국인이란 점을 감안하면..
 
-시작하기 전에 자신의 기기에서 **UEFI 플랫폼 키**를 설정하는 방법이 있는지, 어떻게 하는지를 미리
+- 시작하기 전에 자신의 기기에서 **UEFI 플랫폼 키**를 설정하는 방법이 있는지, 어떻게 하는지를 미리
 알아보기를 권장합니다. UEFI가 지원하지 않는다면 이걸 할 수가 없습니다.
+- 이 문서에서는 UEFI의 플랫폼 키를 설정하거나, EFI 부트 파티션을 건드리고 윈도우 레지스트리를 수정하는
+  등의 위험한 짓을 아주 많이 합니다. 필요하다면 백업을 해두길 권장합니다. ~~라고 해놓고 본인은 백업 안함~~
 
 !!! info "**참고**"
     일단 이걸 하기 전에 위에 참조한 이슈랑
@@ -331,8 +333,8 @@ Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
 Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.esl -Time $(Get-Date)
 ```
 
-만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나 UEFI가
-지원하지 않는 것입니다.  
+만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나, Secure Boot Mode를
+바꾸지 않았거나, UEFI가 지원하지 않는 .  
 만약 성공했다면, 축하합니다. 이제 컴퓨터의 UEFI는 우리의 인증서 발급 기관(CA)을 신뢰할 거에요.
 
 
@@ -411,7 +413,7 @@ openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 
 ## 서명 정책(Sign Policy; Si Policy) 설정
 원래 서명 정책을 담은 xml 파일을 만든 후 바이너리 파일로 만들어야 했는데, 이건 윈도우
-Enterprise/Education Edition에서만 할 수 있기 때문에
+Enterprise/Education Edition에서만 할 수 있기 때문에 (근데 왜 내 컴퓨터에선 되지)
 [이미 만들어진 바이너리 파일을 다운받습니다.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
 
 이제 `selfsign.bin`을 서명해야 윈도우에서 정상적으로 인식하게 됩니다.
@@ -451,7 +453,8 @@ CKS라는 이 값은 레지스트리의 `HKLM\SYSTEM\CurrentControlSet\Control\P
 signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <비밀번호> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
-**혹시 컴퓨터를 다시 못 켤까봐 두려우신 분들은 WinPE(Windows Preinstalled Environment)를 설정하는 것을 추천드립니다.** 아래의 명령어를 실행한 후에는 윈도우 입장에서 ssde.sys가 알 수 없는 인증서로 서명되었는데,
+**혹시 컴퓨터를 다시 못 켤까봐 두려우신 분들은 WinPE(Windows Preinstalled Environment)를 설정하는 것을 추천드립니다.**
+아래의 명령어를 실행한 후에는 윈도우 입장에서 ssde.sys가 알 수 없는 인증서로 서명되었는데,
 커널 드라이버라서 실행을 못하여서 Kernel fault를 일으키게 됩니다. 즉 블루스크린이 뜨거나 복구 환경으로 들어가게
 됩니다. 복구 환경으로 들어갈 수 있다면 다행이고, 아마 들어가질 겁니다. 하지만 만약 그렇지 않다면 다시 컴퓨터로
 부팅할 수 없을지도 모르니까요?  
@@ -466,7 +469,12 @@ signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.p
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
 sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 ```
-**아래 부분은 종이에 적어놓거나 휴대폰으로 보시는 걸 추천드립니다. 외웠다가 까먹으면 망해요..**  
+
+혹시나 아래에 있는 단계를 하다가 무언가 안돼서 원래대로 되돌리려면 복구모드 명령 프롬프트에서
+그냥 `C:\Windows\System32\drivers\ssde.sys`를 삭제하면 원래대로 돌아옵니다. 혹시 UEFI 설정에서 PK를
+초기화했다던가 컴퓨터 설정을 바꾸다가 초기화되면 부팅이 정상적으로 안 될수도 있는데 그때 이 방법을 쓰면 돼요.
+
+**아래 부분은 종이에 적어놓거나 휴대폰으로 보시는 걸 추천드립니다.**  
 이제 컴퓨터를 재부팅하면 아마 평소와 다르게 블루스크린이 뜨거나 '시스템 복구 중' 같은 식으로 뜨다가 다른 창으로
 넘어갈거에요. 이것은 부팅이 실패했고 커널 패닉이 일어났다는 뜻입니다.  
 
@@ -487,7 +495,7 @@ sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=b
 
 이제 할 일을 끝마쳤습니다. 레지스트리 편집기와 cmd 창을 닫고 다시 부팅을 하면 아마 정상적으로 될 거에요.
 이제 ssde.zip을 풀은 폴더에 보면 ssde_info.exe라는 프로그램이 있는데 cmd나 파워셸에서 실행시켜 주세요.
-무언가 오류가 아닌 것처럼 생긴 게 아래처럼 뜨면 반쯤 성공입니다.
+무언가 오류가 아닌 것처럼 생긴 게 아래처럼 뜨면 성공입니다.
 
 ```
 API version is 1.1
@@ -500,7 +508,8 @@ License tamper state is 0
 이제 컴퓨터를 다시 시작해 보세요. '자동 복구에서 PC를 복구하지 못했습니다.'가 다시 뜰 가능성이 높습니다.
 만약 안뜬다면 정상적으로 끝난 것이고, 만약 뜬다면 위에 설명한 것을 다시 실행하면 됩니다.
 
-수고하셨어요.
+수고하셨어요. 필요하다면 UEFI에서 Secure Boot Mode를 원래대로 돌려놓아도 됩니다.
+(PK를 설정하기 위해 잠시 바꿔놨었죠)
 
 
 ## 참고
