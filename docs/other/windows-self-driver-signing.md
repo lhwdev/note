@@ -334,7 +334,7 @@ Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.
 ```
 
 만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나, Secure Boot Mode를
-바꾸지 않았거나, UEFI가 지원하지 않는 .  
+바꾸지 않았거나, UEFI가 지원하지 않는 거에요.  
 만약 성공했다면, 축하합니다. 이제 컴퓨터의 UEFI는 우리의 인증서 발급 기관(CA)을 신뢰할 거에요.
 
 
