@@ -49,4 +49,5 @@ nav:
     - compose/how-it-works.md
   - Other:
     - 윈도우에서 직접 드라이버 서명하기: other/windows-self-driver-signing.md
+    - Self-signing on Windows: other/windows-self-driver-signing-en.md
 
