@@ -11,6 +11,10 @@ date: 2021-11-16
     Get yourself informed enough.
     I do not guarantee if this would work.
 
+!!! danger "🚧 **Under construction**"
+    Going under translating
+    [original Korean document](https://lhwdev.github.io/note/other/windows-self-driver-signing).
+
 ## Why?
 
 I found Synchronous Audio Router(SAR) which can,
@@ -86,35 +90,32 @@ kernel-mode
 OpenSSL is bundled when installing Git, so to use it check out
 [this StackOverflow answer](https://stackoverflow.com/a/51757939/10744716).
 
-저는 걍 깔고 싶어서 걍 깔았어요.
 Those with Chocolatey installed can use `#!powershell choco install openssl` in privileged shell.
-됩니다. 터미널을 껐다 켜기 싫으면 `#!powershell refreshenv`만 치면 돼요.
+Use `#!powershell refreshenv` to use new installed one without restarting shell. (bundled with choco)
 
 
-### '인증서 발급 기관' (Root CA Certificate) 생성
-어떤 Root CA 자체의 인증서가 신뢰된다면 그 CA가 발급한 다른 인증서도 마천가지로 신뢰될 것입니다.
-예를 들어 WIZVERA라는 CA 인증기관을 믿을 수 있다면, 그 인증기관에서 발급한 인증서도 믿을 수 있는데요,
-그래서 우리가 HTTPS 서명을 만들려면 어떤 인증서 발급기관에서 돈을 주고(물론 무료도 있지만) 인증서를
-발급받는 것이에요.
+### Creating Root CA Certificate
 
+If the certificate of Root CA itself is trusted, certs that CA created will be trusted.
 
-`root-ca` 폴더를 만들고 아래 명령어를 실행하세요.
+Create `root-ca` directory, and run the following.
 ``` powershell
 cd root-ca
 
-# 비공개 키 생성하기
+# Generate private key
 openssl genrsa -aes256 -out private.key 2048
 ```
-이 명령어를 설명해보자면,
+Demonstration of this is:
 
-- `-aes256`: 생성되는 비공개 키를 암호화해서 보관함. 즉 암호를 암호화하는 옵션인 것. 비밀번호를
-  입력하는 게 귀찮다면 생략해도 되긴 한데 가능하면 설정하는 게 좋아요.
-- `-out private.key`: 'private.key'라는 파일로 내보냄.
-- `2048`: 키의 길이를 2048비트로.
+- `-aes256`: Encrypt the created private key. If you want to omit this you can, but it would be bad for
+  security?
+- `-out private.key`: Into the file 'private.key'.
+- `2048`: The length of key.
 
+Then copy-paste below and save to `cert-request.conf`, modifying what you want.
+Do not modify things like countryName, (it does nothing) instead edit countryName_default,
+for instance.
 
-그 다음, 아래 내용을 복붙한 후 원하는 내용은 수정하고 `cert-request.conf`이라는 이름으로 저장하세요.
-countryName같은 것들은 수정하거나 지우지 말고, 대신 countryName_default같은 걸 수정하면 됩니다.
 ``` properties
 [ req ]
 default_bits = 2048
@@ -125,7 +126,7 @@ extensions = v3_ca
 req_extensions = v3_ca
 
 [ v3_ca ]
-basicConstraints = critical, CA:TRUE # , pathlen:0 # 이 옵션은 '중간 CA'의 최대 개수를 조절할 수 있다.
+basicConstraints = critical, CA:TRUE # , pathlen:0 # This option can adjust maximum number of 'intermediate CA'.
 subjectKeyIdentifier = hash
 keyUsage = keyCertSign, cRLSign
 
@@ -133,25 +134,23 @@ keyUsage = keyCertSign, cRLSign
 countryName = Country Name (2 letter code)
 countryName_default = 
 
-# 기관
 organizationName = Organization Name (eg, company)
-organizationName_default = Localhost
+organizationName_default = Localhost # or what you want?
 
-# 기관 부서
 organizationalUnitName = Organizational Unit Name (eg, section)
 organizationalUnitName_default  = 
 
-# 이 인증서의 이름
 commonName = "Common Name (eg, your name or your server's hostname)"
-commonName_default = Localhost Root Certification Authority
+commonName_default = Localhost Root Certification Authority # or the name you want??
 ```
 
-터미널로 돌아와서 아래 명령어를 입력해서 인증서 요청 파일(CSR)을 만들으세요.
+Return to shell, execute below to create Certificate Signing Request(CSR).
+
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
 
-아래처럼 뜰 것입니다.
+You will see below.
 ```
 Enter pass phrase for private.key:
 You are about to be asked to enter information that will be incorporated
@@ -166,21 +165,23 @@ Organization Name (eg, company) [Localhost]:
 Organizational Unit Name (eg, section) []:
 Common Name (eg, your name or your server's hostname) [Localhost Root Certification Authority]:
 ```
-비밀번호를 입력하고, 나머지는 `cert-request.conf` 파일에서 설정했기 때문에 엔터를 연타해주면 자동으로 넘어갑니다.
+Enter the password (if you set), press enter repeatedly as we set default values in `cert-request.conf`.
 
-그럼 `cert-request.csr` 파일이 생겼을 것입니다. 아래의 명령어로 실제 인증서를 만들어줍니다.
+Now you can see `cert-request.csr`. Create actual cert with command below.
 ```powershell
 openssl x509 -req -days 18250 -extensions v3_ca `
   -in cert-request.csr -signkey private.key `
   -out cert.cer -extfile cert-request.conf
 ```
 
-- `-days 18250`에서 18250을 원하는 날짜로 수정해주면 됩니다. 18250일은 약 50년입니다. (정확하게는 365 * 50)
-- `-extensions v3_ca`는 cert-request.conf에서 `[ v3_ca ]`라는 부분에서 정보를 불러오도록 해줍니다
-- 나머지는 다 파일이름을 넣어주는 것입니다.
+- Replace 18250 in `-days 18250` with the duration you want the cert to be valid. Note that 18250 equals to
+  approximately 50 years. (or 365 * 50)
+- `-extensions v3_ca` loads `[ v3_ca ]` part from .conf file you'd written.
+- The left are file names.
 
 
-이제 나온 `cert.cer` 파일을 윈도우에 박아줘야 합니다. 이 인증서를 더블클릭해서 열고 '인증서 설치' > 저장소 위치를
+Now you need to register `cert.cer` to Windows so that it is trusted. Double click the cert created from above, `cert.cer`,
+and 'Install certificate` >  파일을 윈도우에 박아줘야 합니다. 이 인증서를 더블클릭해서 열고 '인증서 설치' > 저장소 위치를
 '로컬 컴퓨터'로 > '모든 인증서를 다음 저장소에 저장'에서 '찾아보기'의 '신뢰할 수 있는 루트 인증 기관(Trusted Root
 Certification Authority)'를 선택하고 설치하면 됩니다.
 
