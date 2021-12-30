@@ -6,6 +6,8 @@ date: 2021-11-16
 
 # Self-signing on Windows
 
+Translated from [original Korean document](https://lhwdev.github.io/note/other/windows-self-driver-signing) I'd written.
+I changed my Windows locale to write this..
 
 !!! warning "**Alert**"
     Get yourself informed enough.
@@ -13,7 +15,7 @@ date: 2021-11-16
 
 !!! danger "🚧 **Under construction**"
     Going under translating
-    [original Korean document](https://lhwdev.github.io/note/other/windows-self-driver-signing).
+    [original Korean document](windows-self-driver-signing).
 
 ## Why?
 
@@ -180,26 +182,27 @@ openssl x509 -req -days 18250 -extensions v3_ca `
 - The left are file names.
 
 
-Now you need to register `cert.cer` to Windows so that it is trusted. Double click the cert created from above, `cert.cer`,
-and 'Install certificate` >  파일을 윈도우에 박아줘야 합니다. 이 인증서를 더블클릭해서 열고 '인증서 설치' > 저장소 위치를
-'로컬 컴퓨터'로 > '모든 인증서를 다음 저장소에 저장'에서 '찾아보기'의 '신뢰할 수 있는 루트 인증 기관(Trusted Root
-Certification Authority)'를 선택하고 설치하면 됩니다.
+Now you need to register `cert.cer` to Windows so that it is trusted.
+Double click the cert created from above, `cert.cer`, and 'Install certificate...' >
+'Local Machine' > 'Place all certificates in the following store', 'Browse... >
+'Trusted Root Certification Authorities'. Now if you open your cert, it will be shown
+as valid.
 
 
-이제 **UEFI 플랫폼 키 인증서**와 **커널 모드 드라이버 인증서**를 만들어봅시다.
+Now let's create **UEFI Platform Key Certificate** and **Kernel Mode Driver Certificate**.
 
 
-### UEFI 플랫폼 키 인증서 인증서 만들기
-상위 폴더에서 platform-key 폴더를 만들고 아래 코드를 실행합니다.
+### Creating UEFI Platform Key(PK) Certificate
+Move to the root directory we started, new folder 'platform-key', and run below.
 
 ``` powershell
 cd ../platform-key
 
-# 개인키 생성
+# Generate personal key
 openssl genrsa -aes256 -out private.key 2048
 ```
 
-그 다음, 또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙하세요.
+After, new file `cert-request.conf` and copy-paste, once more.
 
 ``` properties
 [ req ]
@@ -219,26 +222,23 @@ keyUsage = digitalSignature
 countryName = Country Name (2 letter code)
 countryName_default = 
 
-# 기관
 organizationName = Organization Name (eg, company)
 organizationName_default = Localhost
 
-# 기관 부서
 organizationalUnitName = Organizational Unit Name (eg, section)
 organizationalUnitName_default  = 
 
-# 이 인증서의 이름
 commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost UEFI Platform Key Certificate
 ```
 
-아래 명령어로 인증서 발급 요청(CSR) 파일을 만듭니다.
+Create CSR file.
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
-마천가지로 비번을 입력하고, 엔터를 연타해줍니다.
+Enter the password and press enterrrrrr again.
 
-이제 인증서를 만들도록 하겠습니다.
+Let's make the certificate.
 ``` powershell
 openssl x509 -req -days 18250 -extensions v3_req `
   -in cert-request.csr `
@@ -247,37 +247,35 @@ openssl x509 -req -days 18250 -extensions v3_req `
   -extfile cert-request.conf -out cert.cer
 ```
 
-- `-CA ...`: CA 인증서의 경로
-- `-CAkey ...`: CA 비공개 키의 경로
-- `-CAcreateserial -CAserial ../root-ca/serial.srl`: serial 파일을 만들고 serial.srl 파일에
-  저장. 이 루트 인증서로 만드는 인증서들의 시리얼 넘버가 겹치지 않게 해줍니다.
-  만약 이 명령어를 여러번 실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`은 빼야 합니다.
+- `-CA ...`: path to CA certificate (public key)
+- `-CAkey ...`: same (but private key)
+- `-CAcreateserial -CAserial ../root-ca/serial.srl`: Create serial file and save to serial.srl.
+  This file let certificates made using CA never have serial numbers colliding.
+  If serial.srl file already exists, you should exclude `-CAcreateserial` option.
 
-추가로, 나중에 윈도우 드라이버나 'Si Policy'를 서명할 때 필요하기 때문에(signtool을 쓰기 위해) private.key를
-.pfx 파일로 변환해줘야 합니다.
+Additionally you should convert private.key to .pfx file as it is used from signtool to sign
+'Si Policy'.
 
 ``` powershell
 openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 ```
 
 
-### UEFI 펌웨어의 플랫폼 키(PK) 설정
+### Setting Platform Key of UEFI Firmware
 ![Set-SecureBootUefi success](ssd/set-securebootuefi.png)
-*<p align="center">지린다</p>*
+*<p align="center">Cool</p>*
 
-여기서는 본인의 컴퓨터마다 쓸 수 있는 방법이 상이합니다. 저의 경우 Dell 노트북이었는데, UEFI 설정에
-'Expert Key Management'라는 PK를 설정할 수 있는 곳이 있었는데 결론적으로는 아주 잘 작동하지 않았습니다.
-무언가가 심하게 고장난 듯? 하지만! 파워셸 명령어인 `#!powreshell Set-SecureBootUefi`을 써서
-작동하게 했습니다.
+There are different ways depending on your device. My computer was Dell laptop, where there is
+'Export Key Management', but it didn't work.  
+But I got it work by using powershell command `#!powreshell Set-SecureBootUefi`.
 
-일단 한번에 키를 다 만들어놓고 이걸 하고 싶다면 아래 문단 '커널 모드 드라이버 인증서 만들기'를 먼저 해도
-됩니다. 다만 다 만들어놓고 설정을 못한다면 상실감이 클테니 이걸 먼저 하는 것을 권장합니다.
+If you want to set PK after generating all the keys you can, but you might feel sense of lose(?)
+if your UEFI do not allow you to set PK.
 
-우선 본인 UEFI 설정에서 이걸 정하는 기능이 있는지 확인해보고, 있다면 그 방법을 시도해보세요.  
-이 방법도 UEFI에 따라 될 수도, 안될 수도 있습니다.
+Check your UEFI setting first and try it if exists.
 
-필자는 [WSL](https://docs.microsoft.com/windows/wsl/about)을 통해 `efitools`를 설치해서 했습니다.
-사실 저 efitools의 윈도우용 대안을 찾지 못해서 이렇게 한 것인데. 만약 대안을 찾았다면 이 문서에 PR 좀...
+In the method below using powershell, I used `efitools` through [WSL](https://docs.microsoft.com/windows/wsl/about). (but that command has some parameter like `-Hash`? I didn't try it)
+In fact I couldn't find alternative for efitools, so if you find one, PR this document.
 
 **이 방법을 시도하기 전에 UEFI 설정에서 Secure Boot Mode를 적당하게 바꿔주세요.** 기본 모드에서는
 PK 같은 키들을 바꾸지 못하게 막아놨습니다. 제 UEFI(Dell)의 경우 'Deploy Mode'와 'Audit Mode'가 있었는데

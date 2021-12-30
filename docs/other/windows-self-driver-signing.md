@@ -6,6 +6,7 @@ date: 2021-11-16
 
 # 윈도우에서 직접 드라이버 서명하기
 
+Note: [English translation under construction](windows-self-driver-signing-en).
 
 !!! warning "**안내**"
     이 글을 따라하기 전에 충분히 찾아보고 하세요.
@@ -299,7 +300,8 @@ openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 우선 본인 UEFI 설정에서 이걸 정하는 기능이 있는지 확인해보고, 있다면 그 방법을 시도해보세요.  
 이 방법도 UEFI에 따라 될 수도, 안될 수도 있습니다.
 
-필자는 [WSL](https://docs.microsoft.com/windows/wsl/about)을 통해 `efitools`를 설치해서 했습니다.
+필자는 아래의 파워셸 명령어로 설정하는 방법을 쓸 때 [WSL](https://docs.microsoft.com/windows/wsl/about)을
+통해 `efitools`를 설치해서 했습니다.
 사실 저 efitools의 윈도우용 대안을 찾지 못해서 이렇게 한 것인데. 만약 대안을 찾았다면 이 문서에 PR 좀...
 
 **이 방법을 시도하기 전에 UEFI 설정에서 Secure Boot Mode를 적당하게 바꿔주세요.** 기본 모드에서는
