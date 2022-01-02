@@ -6,7 +6,10 @@ date: 2021-11-16
 
 # Self-signing on Windows
 
-Translated from [original Korean document](https://lhwdev.github.io/note/other/windows-self-driver-signing) I'd written.
+This document assumes that those reading this document has basic expertises for shell and programming.
+If you are not, you may try these, but it will be... painstaking.  
+Translated from [original Korean document](https://lhwdev.github.io/note/other/windows-self-driver-signing)
+I had written.
 I changed my Windows locale to write this..
 
 !!! warning "**Alert**"
@@ -277,53 +280,58 @@ Check your UEFI setting first and try it if exists.
 In the method below using powershell, I used `efitools` through [WSL](https://docs.microsoft.com/windows/wsl/about). (but that command has some parameter like `-Hash`? I didn't try it)
 In fact I couldn't find alternative for efitools, so if you find one, PR this document.
 
-**이 방법을 시도하기 전에 UEFI 설정에서 Secure Boot Mode를 적당하게 바꿔주세요.** 기본 모드에서는
-PK 같은 키들을 바꾸지 못하게 막아놨습니다. 제 UEFI(Dell)의 경우 'Deploy Mode'와 'Audit Mode'가 있었는데
-Audit Mode로 바꾸고 아래 명령어를 실행하니 됐습니다.
+**Before trying methods below, change Secure Boot Mode in UEFI configuration.** Changing keys like
+PK is blocked by default. For me, (Dell laptop) there were 'Deploy Mode' and 'Audit Mode'. Setting
+it to 'Audit Mode' worked.
 
-일단 WSL 터미널로 들어갑니다.
+Get into WSL terminal.
 
 ``` bash
-# platform-key 폴더로 이동
-cd $(wslpath "platform-key 폴더의 경로")
+# Move to platform-key directory
+cd $(wslpath "path to platform-key/")
 
-# esl 파일 생성
+# generate esl file
 cert-to-efi-sig-list -g "$(cat /proc/sys/kernel/random/uuid)" cert.cer PK.unsigned.esl
 
-# esl 파일 서명
+# sign esl file
 sign-efi-sig-list -k private.key -c cert.cer PK PK.unsigned.esl PK.esl
 ```
-참고로 .esl 파일은 EFI Signature List의 약자로, UEFI 펌웨어에서 서명을 저장하는 방식의 일부입니다.
-esl 파일을 서명하면 보안이 더 좋으려나?
+Note that .esl stands for EFI Signature List, which is a format to store signatures in UEFI firmware.
 
-설정하기 전에 esl 파일을 백업합시다.
+Backup esl file in advance, just in case.
 ``` powershell
 Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
 ```
 
-그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 됩니다.) platform-key
-폴더로 이동한 후 아래 명령어를 입력합니다.
+Then open powershell with **administrative priviliege**, (don't need to reopen if you are with) move
+to platform-key directory, and enter below.
 
 ``` powershell
 Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.esl -Time $(Get-Date)
 ```
 
-만약 `Set-SecureBootUEFI: 잘못된 인증 데이터: 0xC0000022`라고 뜬다면 키를 잘못 넣어줬거나, Secure Boot Mode를
-바꾸지 않았거나, UEFI가 지원하지 않는 거에요.  
-만약 성공했다면, 축하합니다. 이제 컴퓨터의 UEFI는 우리의 인증서 발급 기관(CA)을 신뢰할 거에요.
+If `Set-SecureBootUEFI: Invalid certification data: 0xC0000022` shows, you may put wrong key, not
+change Secure Boot Mode, or your UEFI may not support it.  
+If you see something like below, congratulations. Our UEFI will trust our CA.
+
+```
+Name Bytes                Attributes
+---- -----                ----------
+PK   {161, 89, 192, 18…} NON VOLATILE…
+```
 
 
 ### 커널 모드 드라이버 인증서 만들기
-상위 폴더에서 kernel-mode-driver 폴더를 만들고 아래 코드를 실행합니다.
+New directory kernel-mode-driver from root, run this.
 
 ``` powershell
 cd ../kernel-mode-driver
 
-# 개인키 생성
+# generate personal key
 openssl genrsa -aes256 -out private.key 2048
 ```
 
-그 다음, 또또 다시 이 폴더에 `cert-request.conf`를 만들고 복붙 ㄱㄱ
+Create `cert-request.conf` here again like this:
 
 ``` properties
 [ req ]
@@ -344,26 +352,23 @@ extendedKeyUsage = codeSigning
 countryName = Country Name (2 letter code)
 countryName_default = 
 
-# 기관
 organizationName = Organization Name (eg, company)
 organizationName_default = Localhost
 
-# 기관 부서
 organizationalUnitName = Organizational Unit Name (eg, section)
 organizationalUnitName_default  = 
 
-# 이 인증서의 이름
 commonName = "Common Name (eg, your name or your server's hostname)"
 commonName_default = Localhost Kernel Mode Driver Certificate
 ```
 
-아래 명령어로 인증서 발급 요청(CSR) 파일을 만들어 주세요.
+Create CSR file.
 ``` powershell
 openssl req -new -key private.key -out cert-request.csr -config cert-request.conf
 ```
-마천가지로 비번을 입력하고, 엔터를 연타해 줍니다.
+Enter password, press enter a few times.
 
-이제 인증서를 만듧니다.
+Create certificate.
 ``` powershell
 openssl x509 -req -days 18250 -extensions v3_req `
   -in cert-request.csr `
@@ -372,24 +377,20 @@ openssl x509 -req -days 18250 -extensions v3_req `
   -extfile cert-request.conf -out cert.cer
 ```
 
-- `-CAserial ../root-ca/serial.srl`: 만약 이 명령어를 위의 UEFI 플랫폼 키를 만들기 전에
-  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙여야 합니다.
-
-
-한번 더, 나중에 윈도우 드라이버나 'Si Policy'를 서명할 때 필요하기 때문에(signtool을 쓰기 위해)
-private.key를 .pfx 파일로 변환해줘야 합니다.
+Again, need to convert private.key into .pfx file.
 
 ``` powershell
 openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 ```
 
-이제 필요한 세 인증서를 전부 만들어 보았습니다.
+We made all three certificates needed. (we could combine all into one, but that
+would be inflexible and less secure? maybe?)
 
 
-## 서명 정책(Sign Policy; Si Policy) 설정
-원래 서명 정책을 담은 xml 파일을 만든 후 바이너리 파일로 만들어야 했는데, 이건 윈도우
-Enterprise/Education Edition에서만 할 수 있기 때문에 (근데 왜 내 컴퓨터에선 되지)
-[이미 만들어진 바이너리 파일을 다운받습니다.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
+## Set Signing Policy (Si Policy)
+We had to create xml file containing signing policy then convert into binary
+file, but this only works in Windows Enterprise/Education Edition. So
+[Download prebuild binary file.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
 
 이제 `selfsign.bin`을 서명해야 윈도우에서 정상적으로 인식하게 됩니다.
 
