@@ -303,7 +303,7 @@ Backup esl file in advance, just in case.
 Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
 ```
 
-Then open powershell with **administrative priviliege**, (don't need to reopen if you are with) move
+Then open powershell with **administrative privilege**, (don't need to reopen if you are with) move
 to platform-key directory, and enter below.
 
 ``` powershell
