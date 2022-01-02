@@ -49,8 +49,8 @@ At that time I came across [one issue](https://github.com/eiz/SynchronousAudioRo
 - Before you start, find ways to set **UEFI Platform Key** on your device. If your UEFI does
   not support this, you cannot do these all.
 - This document covers a lot of dangerous things like 'setting UEFI Platform Key, editing EFI
-  boot partition, modifying Windows system registry'. Recommend backup in advance. ~~(but the
-  writer did not)~~
+  boot partition, modifying Windows system registry'. **Recommend backup in advance**.
+  ~~(but the writer did not)~~
 
 !!! info "**Reference**"
     If you want, take a look at that issue I began from, and
@@ -426,28 +426,30 @@ There is ssde.sys inside. We will sign this driver.
 signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <# password #> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
-**Recommend configuring WinPE(Windows Preinstalled Environment) for those who fears your Windows going critical injure.**
-아래의 명령어를 실행한 후에는 윈도우 입장에서 ssde.sys가 알 수 없는 인증서로 서명되었는데,
-커널 드라이버라서 실행을 못하여서 Kernel fault를 일으키게 됩니다. 즉 블루스크린이 뜨거나 복구 환경으로 들어가게
-됩니다. 복구 환경으로 들어갈 수 있다면 다행이고, 아마 들어가질 겁니다. 하지만 만약 그렇지 않다면 다시 컴퓨터로
-부팅할 수 없을지도 모르니까요?  
-뭐 근데 아마 될거에요?
+After running commands below, Windows recognizes some system driver is signed with unknown driver.
+(as we didn't configure some Code Integrity related values) So causing kernel fault. You will enter
+the recovery mode, known as WinRE, meaning you CANNOT BOOT until you change something.
+
+Those who fears a lot can configure WinPE(Windows Preinstalled Environment), but you may manually
+enter WinRE from UEFI, maybe? If you want check in advance. ~~but the authod didn't~~
 
 
-이제 드디어 적용할 시간입니다. **위에서 서명한** ssde.sys를 설치해줄 겁니다.
-아래 명령어를 관리자 권한 파워셸에서 실행해주세요.
-(cmd라면 `#!powershell $env:windir`을 `#!bat %windir%`로 바꾸면 됩니다.)
+Install the ssde.sys **signed above** by running command below in administrative privilege.
+(If you are in cmd, change `#!powershell $env:windir` to `#!bat %windir%`.)
 
 ``` powershell
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
 sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 ```
 
-혹시나 아래에 있는 단계를 하다가 무언가 안돼서 원래대로 되돌리려면 복구모드 명령 프롬프트에서
-그냥 `C:\Windows\System32\drivers\ssde.sys`를 삭제하면 원래대로 돌아옵니다. 혹시 UEFI 설정에서 PK를
-초기화했다던가 컴퓨터 설정을 바꾸다가 초기화되면 부팅이 정상적으로 안 될수도 있는데 그때 이 방법을 쓰면 돼요.
+**To revert this**, you can just delete that driver in command prompt in recovery mode, like
+`#!bat del /F C:\Windows\System32\drivers\ssde.sys`. If you turn off Secure Boot even after you
+succeeded all steps, PK is reset, so Windows won't recognize `ssde.sys` and you will be brought to
+recovery mode.
 
-**아래 부분은 종이에 적어놓거나 휴대폰으로 보시는 걸 추천드립니다.**  
+**Watch following contents in your phone or write down in advance.**  
+Reboot your computer, and it will show '
+
 이제 컴퓨터를 재부팅하면 아마 평소와 다르게 블루스크린이 뜨거나 '시스템 복구 중' 같은 식으로 뜨다가 다른 창으로
 넘어갈거에요. 이것은 부팅이 실패했고 커널 패닉이 일어났다는 뜻입니다.  
 
