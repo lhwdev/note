@@ -57,7 +57,7 @@ At that time I came across [one issue](https://github.com/eiz/SynchronousAudioRo
     [the issue referenced from there](https://github.com/valinet/ssde).
 
 ## Creating Certificates & Configuration
-I used builtin powershell command `!#powershell New-SelfSignedCertificate` to create certificates
+I used builtin powershell command `#!powershell New-SelfSignedCertificate` to create certificates
 first, but I came to use OpenSSL. If you want, you can follow
 [this one](https://github.com/HyperSine/Windows10-CustomKernelSigners/blob/master/asset/build-your-own-pki.md).
 
