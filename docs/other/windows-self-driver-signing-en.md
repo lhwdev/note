@@ -387,49 +387,46 @@ We made all three certificates needed. (we could combine all into one, but that
 would be inflexible and less secure? maybe?)
 
 
-## Set Signing Policy (Si Policy)
+## Setting Signing Policy (Si Policy)
 We had to create xml file containing signing policy then convert into binary
 file, but this only works in Windows Enterprise/Education Edition. So
 [Download prebuild binary file.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
 
-이제 `selfsign.bin`을 서명해야 윈도우에서 정상적으로 인식하게 됩니다.
+Now sign `selfsign.bin` so that Windows recognizes it.
 
 ``` powershell
-signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.key /p <# platform-key의 비밀번호 #> sipolicy/selfsign.bin
+signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.key /p <# password for platform-key #> sipolicy/selfsign.bin
 ```
 
-- `platform-key/private.key`: platform key의 비공개 키 경로
-- `sipolicy/selfsign.bin`: 바로 위에서 다운받은 파일
+- `sipolicy/selfsign.bin`: the file you downloaded right before
 
-이제 `selfsign.bin.p7`이라는 파일이 생겼을 것입니다. 파일의 이름을 `SiPolicy.p7b`로 바꿔주세요.
-그 다음 **관리자 권한으로** 파워셸을 열고(이미 관리자 권한이면 새로 열지 않아도 됩니다.) 아래 명령어를
-실행해주세요.
+Now you will see `selfsign.bin.p7` file. Rename it into `SiPolicy.p7b`. Open powershell with administrative privilege, (don't need to reopen if you are with) enter command:
 
 ``` powershell
-# EFI 시스템 파티션을 X: 드라이브에 마운트
+# Mount EFI system partition on X: drive (dangerous!)
 mountvol x: /s
 
-# SiPolicy 복사
+# Copy SiPolicy
 cp SiPolicy.p7b X:\EFI\Microsoft\Boot\
 
-# (안해도 상관은 없음?) EFI 볼륨 마운트해뒀던거 취소하기
+# unmount EFI volume
 mountvol x: /d
 ```
 
-## Custom Kernel Signer(CKS) 켜기
-CKS라는 이 값은 레지스트리의 `HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions`에 저장되어
-있다고 합니다. 이 값은 사실상 커널 초기화가 끝나지 않았을 때에만 설정할 수 있는데요, 자세한 원리는
-[원본 문서에서 확인할 수 있습니다](https://github.com/HyperSine/Windows10-CustomKernelSigners).
-저는 방법만 간단하게 설명할게요.
+## Turning on Custom Kernel Signer(CKS)
+This value called 'CodeIntegrity-AllowConfigurablePolicy-CustomKernelSigners' is stored in
+`HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions` in registry. This value can be virtually
+set when kernel initialization is not finished. See
+[original documentation for more detail](https://github.com/HyperSine/Windows10-CustomKernelSigners).
 
-[우선 이 url로 들어가서 ssde.zip을 받아주세요](https://github.com/valinet/ssde/releases).
-거기 안에 보면 ssde.sys가 있습니다. 이 드라이버를 서명해줄 건데요, 아래 명령어를 실행해주세요.
+[Download ssde.zip from here](https://github.com/valinet/ssde/releases).
+There is ssde.sys inside. We will sign this driver.
 
 ``` powershell
-signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <비밀번호> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
+signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <# password #> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
-**혹시 컴퓨터를 다시 못 켤까봐 두려우신 분들은 WinPE(Windows Preinstalled Environment)를 설정하는 것을 추천드립니다.**
+**Recommend configuring WinPE(Windows Preinstalled Environment) for those who fears your Windows going critical injure.**
 아래의 명령어를 실행한 후에는 윈도우 입장에서 ssde.sys가 알 수 없는 인증서로 서명되었는데,
 커널 드라이버라서 실행을 못하여서 Kernel fault를 일으키게 됩니다. 즉 블루스크린이 뜨거나 복구 환경으로 들어가게
 됩니다. 복구 환경으로 들어갈 수 있다면 다행이고, 아마 들어가질 겁니다. 하지만 만약 그렇지 않다면 다시 컴퓨터로
