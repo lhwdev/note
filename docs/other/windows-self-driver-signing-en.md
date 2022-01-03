@@ -431,8 +431,13 @@ After running commands below, Windows recognizes some system driver is signed wi
 the recovery mode, known as WinRE, meaning you CANNOT BOOT until you change something.
 
 Those who fears a lot can configure WinPE(Windows Preinstalled Environment), but you may manually
-enter WinRE from UEFI, maybe? If you want check in advance. ~~but the authod didn't~~
-
+enter WinRE from UEFI, maybe? If you want check in advance. ~~but the authod didn't~~  
+To check if WinRE is available, run below.
+``` powershell
+reagentc /info
+```
+If Windows RE status is `Enabled`, it will likely work. If not, you need to enable it by
+`#!powershell reagentc /enable`.
 
 Install the ssde.sys **signed above** by running command below in administrative privilege.
 (If you are in cmd, change `#!powershell $env:windir` to `#!bat %windir%`.)
@@ -448,22 +453,18 @@ succeeded all steps, PK is reset, so Windows won't recognize `ssde.sys` and you 
 recovery mode.
 
 **Watch following contents in your phone or write down in advance.**  
-Reboot your computer, and it will show '
+Reboot your computer, and it will show different like 'Preparing Auto Repair'. This means booting
+failed and implies kernel panic.
 
-이제 컴퓨터를 재부팅하면 아마 평소와 다르게 블루스크린이 뜨거나 '시스템 복구 중' 같은 식으로 뜨다가 다른 창으로
-넘어갈거에요. 이것은 부팅이 실패했고 커널 패닉이 일어났다는 뜻입니다.  
+> Your PC did not start correctly
 
-> 자동 복구에서 PC를 복구하지 못했습니다.
-
-이제 이 부분에서 **고급 옵션**으로 들어가고, **문제 해결 > 고급 옵션 > 명령 프롬프트**를 선택합니다.
-계정을 선택하고 비번을 입력하면 cmd 창이 뜰겁니다. 여기서 `#!bat regedit`을 입력하면 레지스트리 편집기가
-뜹니다.
-`HKEY_LOCAL_MACHINE`을 선택한 다음 `파일(F)` > `하이브 로드(L)...`을 누르고 윈도우가 설치된 경로에서
-(보통 `C:/Windows`, 복구모드에선 다른 드라이브에 마운트됐을 수도 있어요) `System32 > config > SYSTEM`을 열어서
-아무 이름 입력, 확인을 누릅니다. 그럼 `HKEY_LOCAL_MACHINE` 아래에 해당 '아무 이름'이라는 키가 뜰거에요.
-
-해당 키에서 `ControlSet001` > `Control` > `CI` > `Protected`에 보면 `Licensed`라는 게 보일 거에요.
-더블클릭해서 **기존의 값 0을 1로 바꾸고** 확인을 눌러줍니다.
+Click **Advanced options**, then **Troubleshoot > Advanced options > Command Prompt**.
+Select your account and enter password. It will show a command prompt. Enter `#!bat regedit` to
+enter Registry Editor.
+Select `HKEY_LOCAL_MACHINE`, go to `File(F)` > `Load hive(L)...` then open
+`C:\Windows\System32\config\SYSTEM`, enter any name, (doesn't matter) then you will see '(any name)'
+under `HKEY_LOCAL_MACHINE`. select `ControlSet001\Control\CI\Protected` **under (any name)**, change
+the value **`Licensed` from `0` to `1`**.
 
 ![set-licensed](ssd/set-licensed.jpg)
 이렇게요.
