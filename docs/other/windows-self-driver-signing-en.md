@@ -467,11 +467,12 @@ under `HKEY_LOCAL_MACHINE`. select `ControlSet001\Control\CI\Protected` **under 
 the value **`Licensed` from `0` to `1`**.
 
 ![set-licensed](ssd/set-licensed.jpg)
-이렇게요.
 
-이제 할 일을 끝마쳤습니다. 레지스트리 편집기와 cmd 창을 닫고 다시 부팅을 하면 아마 정상적으로 될 거에요.
-이제 ssde.zip을 풀은 폴더에 보면 ssde_info.exe라는 프로그램이 있는데 cmd나 파워셸에서 실행시켜 주세요.
-무언가 오류가 아닌 것처럼 생긴 게 아래처럼 뜨면 성공입니다.
+Like this.
+
+We finished what we have to do. Close all windows and reboot, and it will start normally.
+Now start `ssde_info.exe` (from ssde.zip we've downloaded somewhere above) from shell.
+If it shows thingy like this:
 
 ```
 API version is 1.1
@@ -479,22 +480,22 @@ Arm count is 2
 Arm watchdog status is 1
 License tamper state is 0
 ```
-이 드라이버도 우리가 만든 인증서로 서명했기 때문에, 정상적으로 실행됐다면 거의 다 끝났습니다.
 
-이제 컴퓨터를 다시 시작해 보세요. '자동 복구에서 PC를 복구하지 못했습니다.'가 다시 뜰 가능성이 높습니다.
-만약 안뜬다면 정상적으로 끝난 것이고, 만약 뜬다면 위에 설명한 것을 다시 실행하면 됩니다.
+than you would likely have succeeded, as this driver was signed with our cert.
 
-수고하셨어요. 필요하다면 UEFI에서 Secure Boot Mode를 원래대로 돌려놓아도 됩니다.
-(PK를 설정하기 위해 잠시 바꿔놨었죠)
+Now if you restart your computer and check if it boots normally. If it does, we finished configuring
+self signing. Congratulations.
+
+If you want revert Secure Boot Mode from UEFI settings. (which was needed to set PK)
 
 
-## 참고
-기본적으로 참고한 문서:
+## Reference
+This document is based on ssde. Some references are:
 
-- [안정적인 방법: valinet/ssde](https://github.com/valinet/ssde)
-- [최초로 성공한 사례: HyperSine/Windows10-CustomKernelSigners](https://github.com/HyperSine/Windows10-CustomKernelSigners)
-- [원본 PoC: Licensed Driver Signing in Windows 10](https://www.geoffchappell.com/notes/windows/license/customkernelsigners.htm)
+- [Stable method: valinet/ssde](https://github.com/valinet/ssde)
+- [First working PoC: HyperSine/Windows10-CustomKernelSigners](https://github.com/HyperSine/Windows10-CustomKernelSigners)
+- [Original PoC: Licensed Driver Signing in Windows 10](https://www.geoffchappell.com/notes/windows/license/customkernelsigners.htm)
 
-조금 유용한 문서들:
+Some useful documents:
 
-- [미국 국방부에서 Secure Boot에 관해 쓴 글](https://media.defense.gov/2020/Sep/15/2002497594/-1/-1/0/CTR-UEFI-Secure-Boot-Customization-UOO168873-20.PDF)
+- [Articles about UEFI Secure Boot from U.S. Defense](https://media.defense.gov/2020/Sep/15/2002497594/-1/-1/0/CTR-UEFI-Secure-Boot-Customization-UOO168873-20.PDF)
