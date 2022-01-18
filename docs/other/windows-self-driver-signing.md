@@ -6,7 +6,7 @@ date: 2021-11-16
 
 # 윈도우에서 직접 드라이버 서명하기
 
-Note: [English translation under construction](windows-self-driver-signing-en).
+Note: [English version available](windows-self-driver-signing-en).
 
 !!! warning "**안내**"
     이 글을 따라하기 전에 충분히 찾아보고 하세요.

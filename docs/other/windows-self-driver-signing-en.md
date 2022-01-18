@@ -8,17 +8,13 @@ date: 2021-11-16
 
 This document assumes that those reading this document has basic expertises for shell and programming.
 If you are not, you may try these, but it will be... painstaking.  
-Translated from [original Korean document](https://lhwdev.github.io/note/other/windows-self-driver-signing)
-I had written.
-I changed my Windows locale to write this..
+[Same document in Korean](https://lhwdev.github.io/note/other/windows-self-driver-signing)
+is also available. Note that my english may be poor.
 
 !!! warning "**Alert**"
     Get yourself informed enough.
     I do not guarantee if this would work.
 
-!!! danger "🚧 **Under construction**"
-    Going under translating
-    [original Korean document](windows-self-driver-signing).
 
 ## Why?
 
@@ -90,6 +86,8 @@ kernel-mode
 - cert-request.csr
 - cert.cer
 ```
+You can rename as you want, but you need to use that name
+all through this guide.
 
 ### Installing OpenSSL
 OpenSSL is bundled when installing Git, so to use it check out
@@ -282,7 +280,7 @@ In fact I couldn't find alternative for efitools, so if you find one, PR this do
 
 **Before trying methods below, change Secure Boot Mode in UEFI configuration.** Changing keys like
 PK is blocked by default. For me, (Dell laptop) there were 'Deploy Mode' and 'Audit Mode'. Setting
-it to 'Audit Mode' worked.
+Secure Boot Mode to 'Audit Mode' worked.
 
 Get into WSL terminal.
 
@@ -321,7 +319,7 @@ PK   {161, 89, 192, 18…} NON VOLATILE…
 ```
 
 
-### 커널 모드 드라이버 인증서 만들기
+### Creating Kernel Mode Driver Certificate
 New directory kernel-mode-driver from root, run this.
 
 ``` powershell
