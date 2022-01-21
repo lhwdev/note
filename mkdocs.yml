@@ -43,6 +43,8 @@ nav:
   - debug-page.md
   - 고등학교 개발:
     - high/covid-selftest-macro.md
+  - Android:
+    - android/transparent-status-bar.md
   - Kotlin Compiler Plugin:
     - kotlin-compiler-plugin/backend-ir.md
   - Jetpack compose:
