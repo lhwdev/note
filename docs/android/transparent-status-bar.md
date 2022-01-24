@@ -11,7 +11,7 @@ Also I wanted to use Compose for these thingy.
 
 Once I wanted to implement [Full Screen Dialog](https://material.io/components/dialogs#full-screen-dialog),
 **which lays below system insets**.  
-I googled around, but I found some do not fit for modern Android frameworke as they are deprecated.
+I googled around, but I found some do not fit for modern Android framework as they are deprecated.
 
 
 ## TL; DR
