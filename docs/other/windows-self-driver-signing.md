@@ -13,7 +13,7 @@ Note: [English version available](windows-self-driver-signing-en).
     필자는 어떤 문제도 보장하지 않습니다.
 
 ## 왜?
-내가 온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌습니다. 그리고 평소에 음악을 들을 때
+온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌습니다. 그리고 평소에 음악을 들을 때
 FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트럼을 보면 좀 간지나기 때문에...
 
 아무튼 이러한 짓거리에는 필수적으로 필요했던 게 바로 가상 오디오 장치였는데 이미 나와있는 것들은
@@ -44,7 +44,7 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 > Prereleases of SAR are unsigned. That means that it is required to enable testsigning boot option
   to make Windows load the driver. Else the driver won't be loaded.
 
-이 시점에, 나는 UEFI 설정에서 Secure Boot를 켜놨었고 곧 윈도우 11로 업그레이드할 계획이었습니다.
+이 시점에,  UEFI 설정에서 Secure Boot를 켜놨었고 곧 윈도우 11로 업그레이드할 계획이었습니다.
 그리고 보안을 고려하기도 했기 때문에 `testsigning` 부트 설정을 켜는 건 가능한 선택이 아니었습니다.
 
 그러다가 [어느 한 이슈](https://github.com/eiz/SynchronousAudioRouter/issues/86)를 보게 되었는데
@@ -55,10 +55,10 @@ FL 같은 DAW로 소리를 직접 보정해서 들었는데, 오디오 스펙트
 
 
 ## 본격적으로 시작!
-내가 참조한 문서들은 저기 말한 '어느 한 이슈'에 설명되어 있는 방법을 (아주 많이) 변형해서 OpenSSL을 쓴
+제가 참조한 문서들은 저기 말한 '어느 한 이슈'에 설명되어 있는 방법을 (아주 많이) 변형해서 OpenSSL을 쓴
 방법이었어요. 설명이 아주 불친절하더라고요.
 실제로 불친절한지는 모르겠지만 (하지만 `its confusing and you have to jump back and forth between his guide and an older one` 라는 말이 있었다만)
-내가 한국인이란 점을 감안하면..
+제가 한국인이란 점을 감안하면..
 
 - 시작하기 전에 자신의 기기에서 **UEFI 플랫폼 키**를 설정하는 방법이 있는지, 어떻게 하는지를 미리
 알아보기를 권장합니다. UEFI가 지원하지 않는다면 이걸 할 수가 없습니다.
