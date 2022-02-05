@@ -34,7 +34,7 @@ So I made up mind to install it. However...
 At this point I'd turned Secure Boot and gotta upgrade to Windows 11.
 I also considered security, so turning on `testsigning` was not eligible.
 
-At that time I came across [one issue](https://github.com/eiz/SynchronousAudioRouter/issues/86) saying:
+At that time I came across a comment from [one issue](https://github.com/eiz/SynchronousAudioRouter/issues/86) saying:
 > UPDATE 3: SUCCESS!!!!!!!!! I am running the latest SAR in Reaper as we speak on windows 10 without testmode.
 
 (lhwdev was determined!)
@@ -50,16 +50,17 @@ At that time I came across [one issue](https://github.com/eiz/SynchronousAudioRo
 
 !!! info "**Reference**"
     If you want, take a look at that issue I began from, and
-    [the issue referenced from there](https://github.com/valinet/ssde).
+    [the repo referenced from there](https://github.com/valinet/ssde).
 
 ## Creating Certificates & Configuration
 I used builtin powershell command `#!powershell New-SelfSignedCertificate` to create certificates
-first, but I came to use OpenSSL. If you want, you can follow
-[this one](https://github.com/HyperSine/Windows10-CustomKernelSigners/blob/master/asset/build-your-own-pki.md).
+first, but I came to use OpenSSL. If you want to use builtin things, you can follow
+[this one](https://github.com/HyperSine/Windows10-CustomKernelSigners/blob/master/asset/build-your-own-pki.md)
+instead of openssl-related things.
 
 We are going to create certificates which is only valid on your device. (Virtual) Root Certificate
 Authority, (Root CA) and create other certs using it.
-I heard these methods work on Windows 11.
+These methods will work on Windows 11 AFAIK.
 
 Launch Powershell with **admistrative privilege**. (not needed to create certs; needed after that)
 This article is based on Powershell.
@@ -280,9 +281,9 @@ In fact I couldn't find alternative for efitools, so if you find one, PR this do
 
 **Before trying methods below, change Secure Boot Mode in UEFI configuration.** Changing keys like
 PK is blocked by default. For me, (Dell laptop) there were 'Deploy Mode' and 'Audit Mode'. Setting
-Secure Boot Mode to 'Audit Mode' worked.
+Secure Boot Mode to 'Audit Mode' made it work.
 
-Get into WSL terminal.
+**Get into WSL terminal.**
 
 ``` bash
 # Move to platform-key directory
@@ -296,19 +297,19 @@ sign-efi-sig-list -k private.key -c cert.cer PK PK.unsigned.esl PK.esl
 ```
 Note that .esl stands for EFI Signature List, which is a format to store signatures in UEFI firmware.
 
-Backup esl file in advance, just in case.
+Backup esl file in advance, just in case, **from powershell**.
 ``` powershell
 Get-SecureBootUefi -Name PK -OutputFilePath PK.old.esl
 ```
 
-Then open powershell with **administrative privilege**, (don't need to reopen if you are with) move
+Then open powershell with administrative privilege, (don't need to reopen if you are with) move
 to platform-key directory, and enter below.
 
 ``` powershell
 Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.esl -Time $(Get-Date)
 ```
 
-If `Set-SecureBootUEFI: Invalid certification data: 0xC0000022` shows, you may put wrong key, not
+If `Set-SecureBootUEFI: Invalid certification data: 0xC0000022` shows, you may put wrong key, may not
 change Secure Boot Mode, or your UEFI may not support it.  
 If you see something like below, congratulations. Our UEFI will trust our CA.
 
@@ -407,13 +408,13 @@ mountvol x: /s
 # Copy SiPolicy
 cp SiPolicy.p7b X:\EFI\Microsoft\Boot\
 
-# unmount EFI volume
+# unmount EFI volume if you want
 mountvol x: /d
 ```
 
 ## Turning on Custom Kernel Signer(CKS)
 This value called 'CodeIntegrity-AllowConfigurablePolicy-CustomKernelSigners' is stored in
-`HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions` in registry. This value can be virtually
+`HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions` in registry. This value can be
 set when kernel initialization is not finished. See
 [original documentation for more detail](https://github.com/HyperSine/Windows10-CustomKernelSigners).
 
@@ -424,12 +425,12 @@ There is ssde.sys inside. We will sign this driver.
 signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <# password #> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
-After running commands below, Windows recognizes some system driver is signed with unknown driver.
+After running following commands, Windows recognizes some system driver is signed with unknown driver.
 (as we didn't configure some Code Integrity related values) So causing kernel fault. You will enter
-the recovery mode, known as WinRE, meaning you CANNOT BOOT until you change something.
+the recovery mode, known as WinRE, **meaning you CANNOT BOOT until you change something there.**
 
 Those who fears a lot can configure WinPE(Windows Preinstalled Environment), but you may manually
-enter WinRE from UEFI, maybe? If you want check in advance. ~~but the authod didn't~~  
+enter WinRE from UEFI, maybe? If you want check in advance. ~~but the author didn't EP2~~  
 To check if WinRE is available, run below.
 ``` powershell
 reagentc /info
@@ -445,16 +446,16 @@ cp ssde.sys $env:windir\system32\drivers\ssde.sys
 sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 ```
 
-**To revert this**, you can just delete that driver in command prompt in recovery mode, like
+**To revert this**, you can just delete that driver in command prompt in recovery mode or somewhere, like
 `#!bat del /F C:\Windows\System32\drivers\ssde.sys`. If you turn off Secure Boot even after you
-succeeded all steps, PK is reset, so Windows won't recognize `ssde.sys` and you will be brought to
+succeeded all steps, there will be no PK, so Windows won't recognize `ssde.sys` and you will be brought to
 recovery mode.
 
 **Watch following contents in your phone or write down in advance.**  
 Reboot your computer, and it will show different like 'Preparing Auto Repair'. This means booting
 failed and implies kernel panic.
 
-> Your PC did not start correctly
+> Your PC did not start correctly.
 
 Click **Advanced options**, then **Troubleshoot > Advanced options > Command Prompt**.
 Select your account and enter password. It will show a command prompt. Enter `#!bat regedit` to
@@ -481,7 +482,7 @@ License tamper state is 0
 
 than you would likely have succeeded, as this driver was signed with our cert.
 
-Now if you restart your computer and check if it boots normally. If it does, we finished configuring
+Now restart your computer and check if it boots normally. If it does, we finished configuring
 self signing. Congratulations.
 
 If you want revert Secure Boot Mode from UEFI settings. (which was needed to set PK)
