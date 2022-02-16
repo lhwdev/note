@@ -483,7 +483,8 @@ License tamper state is 0
 than you would likely have succeeded, as this driver was signed with our cert.
 
 Now restart your computer and check if it boots normally. If it does, we finished configuring
-self signing. Congratulations.
+self signing, Congratulations. If not, repeat going into recovery mode and setting registry
+a few times.
 
 If you want revert Secure Boot Mode from UEFI settings. (which was needed to set PK)
 
