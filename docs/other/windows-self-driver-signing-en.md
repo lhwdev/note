@@ -7,6 +7,7 @@ date: 2021-11-16
 # Self-signing on Windows
 
 This document assumes that those reading this document has basic expertises for shell and programming.
+Even though I tried to explain as much as I can, it will not suffice for most people without extertises.
 If you are not, you may try these, but it will be... painstaking.  
 [Same document in Korean](https://lhwdev.github.io/note/other/windows-self-driver-signing)
 is also available. Note that my english may be poor.
