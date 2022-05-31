@@ -400,7 +400,7 @@ openssl x509 -req -days 18250 -extensions v3_req `
 ```
 
 - `-CAserial ../root-ca/serial.srl`: 만약 이 명령어를 위의 UEFI 플랫폼 키를 만들기 전에
-  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙여야 합니다.
+  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙이면 안됩니다.
 
 
 한번 더, 나중에 윈도우 드라이버나 'Si Policy'를 서명할 때 필요하기 때문에(signtool을 쓰기 위해)
