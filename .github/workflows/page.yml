@@ -8,11 +8,12 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    container: squidfunk/mkdocs-material
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
       - name: Install requirements
         run: |
+          pip install mkdocs-material
           pip install mkdocs-macros-plugin
           
       - run: mkdocs gh-deploy --force
