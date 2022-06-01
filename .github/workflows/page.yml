@@ -15,5 +15,6 @@ jobs:
         run: |
           pip install mkdocs-material
           pip install mkdocs-macros-plugin
-          
+          pip install mkdocs-minify
+        
       - run: mkdocs gh-deploy --force
