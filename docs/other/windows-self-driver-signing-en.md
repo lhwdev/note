@@ -14,7 +14,9 @@ is also available. Note that my english may be poor.
 
 !!! warning "**Alert**"
     Get yourself informed enough.
-    I do not guarantee if this would work.
+    I do not guarantee if this would work.  
+    This writing is the record of what I've done, rather than a comprehensive guide.
+    kleene-way-to-do-this (better than mine) should be exist.
 
 
 ## Why?
@@ -319,6 +321,11 @@ Name Bytes                Attributes
 ---- -----                ----------
 PK   {161, 89, 192, 18…} NON VOLATILE…
 ```
+
+APPENDIX: I've changed my laptop, so I tried this once again in 'Samsung Galaxy Book'. There was nothing
+like Audit Mode/Deploy Mode, (it seems they won't allow changing UEFI keys out of UEFI setup) but I
+could set PK in UEFI setup. It didn't show my D: drive, and came up that I can only select FAT32
+partitions. I created new partition, copy PK file and finally I managed to set PK.
 
 
 ### Creating Kernel Mode Driver Certificate

@@ -10,7 +10,9 @@ Note: [English version available](windows-self-driver-signing-en).
 
 !!! warning "**안내**"
     이 글을 따라하기 전에 충분히 찾아보고 하세요.
-    필자는 어떤 문제도 보장하지 않습니다.
+    필자는 어떤 문제도 보장하지 않습니다.  
+    이 글은 상세한 설명서가 아니라, 그냥 제가 어떤 삽질을 했는지(는 좀 생략됐지만), 어떻게 성공했는지를
+    기록한 글입니다. 반드시 더 깔끔한 방법이 있을 겁니다.
 
 ## 왜?
 온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌습니다. 그리고 평소에 음악을 들을 때
@@ -340,6 +342,13 @@ Set-SecureBootUEFI -Name PK -SignedFilePath PK.esl -ContentFilePath PK.unsigned.
 만약 성공했다면, 축하합니다. 이제 컴퓨터의 UEFI는 우리의 인증서 발급 기관(CA)을 신뢰할 거에요.
 
 
+추가: 노트북을 바꾸게 되어서 삼성 갤럭시 북에서 다시 한번 시도해봤어요. 여기서는 Audit Mode/Deploy Mode 같은
+구분이 없고, 바이오스 설정에서 직접 키를 바꾸게 되어있더라고요. 그런데 드라이브 목록에서 D: 드라이브가 안뜨길래
+이유를 생각해봤는데 파티션 목록들을 보니 딱 FAT32 형식의 파티션만 뜨는 것 같더라고요. 그래서 USB 꽂기는 귀찮았고
+D 드라이브를 shrink하고, 그 디스크에서 자그만 파티션 하나를 파고 FAT32로 포맷하고 마운트해서 키를 넣어놓은 다음
+다시 바이오스 설정에 들어가니까 뜨더라고요.
+
+
 ### 커널 모드 드라이버 인증서 만들기
 상위 폴더에서 kernel-mode-driver 폴더를 만들고 아래 코드를 실행합니다.
 
@@ -390,7 +399,7 @@ openssl req -new -key private.key -out cert-request.csr -config cert-request.con
 ```
 마천가지로 비번을 입력하고, 엔터를 연타해 줍니다.
 
-이제 인증서를 만듧니다.
+이제 인증서를 만듭니다.
 ``` powershell
 openssl x509 -req -days 18250 -extensions v3_req `
   -in cert-request.csr `
@@ -400,7 +409,7 @@ openssl x509 -req -days 18250 -extensions v3_req `
 ```
 
 - `-CAserial ../root-ca/serial.srl`: 만약 이 명령어를 위의 UEFI 플랫폼 키를 만들기 전에
-  실행할 때에는 serial.srl 파일이 이미 있기 때문에 `-CAcreateserial`을 붙이면 안됩니다.
+  실행할 때에는 serial.srl 파일이 없기 때문에 `-CAcreateserial`을 붙여야 합니다.
 
 
 한번 더, 나중에 윈도우 드라이버나 'Si Policy'를 서명할 때 필요하기 때문에(signtool을 쓰기 위해)
