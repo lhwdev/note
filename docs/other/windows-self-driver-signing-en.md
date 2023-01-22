@@ -430,7 +430,7 @@ set when kernel initialization is not finished. See
 There is ssde.sys inside. We will sign this driver.
 
 ``` powershell
-signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <# password #> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
+signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <# password #> /td sha256 /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
 After running following commands, Windows recognizes some system driver is signed with unknown driver.

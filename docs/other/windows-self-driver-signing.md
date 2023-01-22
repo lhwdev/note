@@ -461,7 +461,7 @@ CKS라는 이 값은 레지스트리의 `HKLM\SYSTEM\CurrentControlSet\Control\P
 거기 안에 보면 ssde.sys가 있습니다. 이 드라이버를 서명해줄 건데요, 아래 명령어를 실행해주세요.
 
 ``` powershell
-signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <비밀번호> /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
+signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.pfx /p <비밀번호> /td sha256 /tr http://sha256timestamp.ws.symantec.com/sha256/timestamp ssde.sys
 ```
 
 **혹시 컴퓨터를 다시 못 켤까봐 두려우신 분들은 WinPE(Windows Preinstalled Environment)를 설정하는 것을 추천드립니다.**
