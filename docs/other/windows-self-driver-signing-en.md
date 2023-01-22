@@ -497,6 +497,15 @@ a few times.
 If you want revert Secure Boot Mode from UEFI settings. (which was needed to set PK)
 
 
+추가: 새로 산 노트북에서 했을때는 이 방법이 잘 작동하지 않았습니다. 하지만 서비스 설치를 한 후, ssde_enable.exe를
+실행해서 설정해놓은 다음 다시 시작 -> 복구모드 진입 -> 레지스트리 편집 -> 다시 시작 -> (cmd창 뜸, 자동으로 설정)의
+과정을 거치니 잘 작동하더라고요.
+
+Appendix: This didn't work well on my new laptop. However after I installed ssde service, I ran
+ssde_enable.exe then restarted -> enter recovery mode -> edited registry -> restarted -> (some cmd
+window automatically opened setting things up), which came up to be success.
+
+
 ## Reference
 This document is based on ssde. Some references are:
 
