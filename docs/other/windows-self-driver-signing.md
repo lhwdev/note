@@ -478,7 +478,7 @@ signtool sign /fd sha256 /a /ac root-ca/cert.cer /f kernel-mode-driver/private.p
 
 ``` powershell
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
-sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
+sc.exe create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 ```
 
 혹시나 아래에 있는 단계를 하다가 무언가 안돼서 원래대로 되돌리려면 복구모드 명령 프롬프트에서

@@ -451,7 +451,7 @@ Install the ssde.sys **signed above** by running command below in administrative
 
 ``` powershell
 cp ssde.sys $env:windir\system32\drivers\ssde.sys
-sc create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
+sc.exe create ssde binpath=$env:windir\system32\drivers\ssde.sys type=kernel start=boot error=normal
 ```
 
 **To revert this**, you can just delete that driver in command prompt in recovery mode or somewhere, like
