@@ -430,7 +430,7 @@ Enterprise/Education Edition에서만 할 수 있기 때문에 (근데 왜 내 �
 이제 `selfsign.bin`을 서명해야 윈도우에서 정상적으로 인식하게 됩니다.
 
 ``` powershell
-signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.key /p <# platform-key의 비밀번호 #> sipolicy/selfsign.bin
+signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.pfx /p <# platform-key의 비밀번호 #> sipolicy/selfsign.bin
 ```
 
 - `platform-key/private.key`: platform key의 비공개 키 경로

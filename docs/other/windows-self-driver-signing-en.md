@@ -402,7 +402,7 @@ file, but this only works in Windows Enterprise/Education Edition. So
 Now sign `selfsign.bin` so that Windows recognizes it.
 
 ``` powershell
-signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.key /p <# password for platform-key #> sipolicy/selfsign.bin
+signtool sign /fd sha256 /p7co 1.3.6.1.4.1.311.79.1 /p7 . /f platform-key/private.pfx /p <# password for platform-key #> sipolicy/selfsign.bin
 ```
 
 - `sipolicy/selfsign.bin`: the file you downloaded right before
