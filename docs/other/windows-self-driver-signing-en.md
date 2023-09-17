@@ -17,6 +17,11 @@ is also available. Note that my english may be poor.
     I do not guarantee if this would work.  
     This writing is the record of what I've done, rather than a comprehensive guide.
     kleene-way-to-do-this (better than mine) should be exist.
+    
+!!! warning "**Another Alert**"
+    Note that I do not know any security implications by this task.
+    Steps below may be more harmful than just enabling testsigning.
+    Know what you do.
 
 
 ## Why?
@@ -395,9 +400,15 @@ would be inflexible and less secure? maybe?)
 
 
 ## Setting Signing Policy (Si Policy)
-We had to create xml file containing signing policy then convert into binary
+~~We had to create xml file containing signing policy then convert into binary
 file, but this only works in Windows Enterprise/Education Edition. So
-[Download prebuild binary file.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
+[Download prebuild binary file.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)~~
+
+!!! warning "Maybe Harmful to Your Computer"
+    `@ridingtheflow` told that this prebuilt SiPolicy states that it allows _any
+    driver_. Also, downloading SiPolicy itself may be harmful.  
+    Building SiPolicy with `New-CIPolicy` is also fishy, because it will by default create
+    policy with `Enabled:Audit Mode`, which is meant for debugging.
 
 Now sign `selfsign.bin` so that Windows recognizes it.
 
@@ -490,16 +501,11 @@ License tamper state is 0
 
 than you would likely have succeeded, as this driver was signed with our cert.
 
-Now restart your computer and check if it boots normally. If it does, we finished configuring
-self signing, Congratulations. If not, repeat going into recovery mode and setting registry
-a few times.
+Now restart your computer and check if it boots normally. If it does, we finished configuring self signing, Congratulations. If not, repeat going into recovery mode
+and setting registry a few times.
 
 If you want revert Secure Boot Mode from UEFI settings. (which was needed to set PK)
 
-
-추가: 새로 산 노트북에서 했을때는 이 방법이 잘 작동하지 않았습니다. 하지만 서비스 설치를 한 후, ssde_enable.exe를
-실행해서 설정해놓은 다음 다시 시작 -> 복구모드 진입 -> 레지스트리 편집 -> 다시 시작 -> (cmd창 뜸, 자동으로 설정)의
-과정을 거치니 잘 작동하더라고요.
 
 Appendix: This didn't work well on my new laptop. However after I installed ssde service, I ran
 ssde_enable.exe then restarted -> enter recovery mode -> edited registry -> restarted -> (some cmd

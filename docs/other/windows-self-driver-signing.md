@@ -13,6 +13,11 @@ Note: [English version available](windows-self-driver-signing-en).
     필자는 어떤 문제도 보장하지 않습니다.  
     이 글은 상세한 설명서가 아니라, 그냥 제가 어떤 삽질을 했는지(는 좀 생략됐지만), 어떻게 성공했는지를
     기록한 글입니다. 반드시 더 깔끔한 방법이 있을 겁니다.
+    
+!!! warning "**안내 2**"
+    이걸 따라하면 안전할 거라고 보장하지 않습니다.
+    사실 이대로 하면 실제로 안전한지 위험한지도 모릅니다.. 어쩌면 testsigning보다 더 보안상 나쁠
+    수도 있습니다.
 
 ## 왜?
 온라인 수업을 하면서 마이크로 장난(...)을 좀 쳐보고 싶어졌습니다. 그리고 평소에 음악을 들을 때
@@ -423,9 +428,13 @@ openssl pkcs12 -export -out private.pfx -inkey private.key -in cert.cer
 
 
 ## 서명 정책(Sign Policy; Si Policy) 설정
-원래 서명 정책을 담은 xml 파일을 만든 후 바이너리 파일로 만들어야 했는데, 이건 윈도우
+~~원래 서명 정책을 담은 xml 파일을 만든 후 바이너리 파일로 만들어야 했는데, 이건 윈도우
 Enterprise/Education Edition에서만 할 수 있기 때문에 (근데 왜 내 컴퓨터에선 되지)
-[이미 만들어진 바이너리 파일을 다운받습니다.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)
+[이미 만들어진 바이너리 파일을 다운받습니다.](https://www.geoffchappell.com/notes/windows/license/_download/sipolicy.zip)~~
+
+!!! warning "보안 경고!"
+    `@ridingtheflow`님이 이 빌드된 SiPolicy 파일이 _모든 드라이버를 허용하는_ 내용이라고 알려주셨습니다. 그리고, SiPolicy를 다운받는 것 자체가 위험할 수도 있습니다.  
+    `New-CIPolicy`로 SiPolicy를 만드는 것도 위험할 수 있는데, 기본적으로 `Event:Audit Mode`라는 디버깅용 모드가 켜진 상태이기 때문입니다.
 
 이제 `selfsign.bin`을 서명해야 윈도우에서 정상적으로 인식하게 됩니다.
 
